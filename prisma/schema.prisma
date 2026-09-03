@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  role          String   @default("INTERN")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  internProfile InternProfile?
+  givenReviews  Review[]       @relation("Reviewer")
+  hrReviews     DailyReport[]  @relation("HrReviewer")
+}
+
+model InternProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name              String
+  dob               DateTime
+  designation       String
+  photoUrl          String?
+  idCardNumber      String   @unique
+
+  age               Int?
+  gender            String?
+  height            Float?
+  weight            Float?
+  bloodGroup        String?
+  city              String?
+
+  bio               String?
+  likesCorporate    String?
+  dislikesCorporate String?
+
+  instagramId       String?
+  linkedInId        String?
+  galleryImages     String   @default("[]") // JSON stringified array
+
+  completedProjects String   @default("[]") // JSON stringified array
+  ongoingProjects   String   @default("[]") // JSON stringified array
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  reviews           Review[]
+  dailyReports      DailyReport[]
+}
+
+model Review {
+  id          String     @id @default(cuid())
+  type        String
+  rating      Int
+  comments    String?
+  timestamp   DateTime   @default(now())
+
+  reviewerId  String
+  reviewer    User       @relation("Reviewer", fields: [reviewerId], references: [id])
+  
+  internId    String
+  intern      InternProfile @relation(fields: [internId], references: [id], onDelete: Cascade)
+}
+
+model DailyReport {
+  id             String   @id @default(cuid())
+  date           DateTime @default(now())
+  reportOfDay    String
+  learningOfDay  String
+  meetingOfDay   String
+
+  hrReview       String?
+  hrReviewerId   String?
+  hrReviewer     User?    @relation("HrReviewer", fields: [hrReviewerId], references: [id])
+
+  internId       String
+  intern         InternProfile @relation(fields: [internId], references: [id], onDelete: Cascade)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
