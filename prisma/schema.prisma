@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -28,6 +29,9 @@ model InternProfile {
   name              String
   dob               DateTime
   designation       String
+  department        String   @default("Engineering")
+  teamName          String   @default("Nexus WebGL Core")
+  xp                Int      @default(0)
   photoUrl          String?
   idCardNumber      String   @unique
 
@@ -44,6 +48,7 @@ model InternProfile {
 
   instagramId       String?
   linkedInId        String?
+  githubId          String?
   galleryImages     String   @default("[]") // JSON stringified array
 
   completedProjects String   @default("[]") // JSON stringified array

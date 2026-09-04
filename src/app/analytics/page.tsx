@@ -1,6 +1,16 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+const chartData = [
+  { name: 'Jan', logs: 45 },
+  { name: 'Feb', logs: 60 },
+  { name: 'Mar', logs: 30 },
+  { name: 'Apr', logs: 80 },
+  { name: 'May', logs: 50 },
+  { name: 'Jun', logs: 100 },
+];
 
 export default function AnalyticsPage() {
   // Mock data for analytics
@@ -59,20 +69,37 @@ export default function AnalyticsPage() {
         {/* Charts Layout */}
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* Bar Chart Mockup */}
-          <div className="flex-1 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black p-8 rounded-xl shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-            <h3 className="text-lg font-semibold tracking-wide text-slate-900/90 mb-8">Daily Logs Over Time</h3>
-            <div className="h-64 flex items-end justify-between gap-2 md:gap-4 px-2">
-              {[45, 60, 30, 80, 50, 100, 75, 40, 85, 65, 90, 55].map((h, i) => (
-                <div key={i} className="w-full bg-gradient-to-t from-[#8A2BE2]/20 to-[#8A2BE2]/60 rounded-t-lg relative group cursor-pointer hover:to-[#8A2BE2] transition-colors border-t border-[#8A2BE2]/40" style={{ height: `${h}%` }}>
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#e0e5ec] border border-[#8A2BE2]/50 px-3 py-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-[6px_6px_0_0_rgba(0,0,0,1)] font-bold text-slate-900 z-10">
-                    {h}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-4 text-xs text-slate-400 uppercase font-bold border-t border-black pt-4">
-              <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+          {/* Interactive Recharts Bar Chart */}
+          <div className="flex-1 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black p-8 rounded-xl relative">
+            <h3 className="text-lg font-semibold tracking-wide text-slate-900 mb-8">Daily Logs Over Time</h3>
+            <div className="h-64 w-full relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} 
+                    dy={10} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} 
+                  />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    contentStyle={{ borderRadius: '12px', border: '2px solid #000', boxShadow: '4px 4px 0 0 rgba(0,0,0,1)', fontWeight: 'bold' }}
+                    itemStyle={{ color: '#8A2BE2' }}
+                  />
+                  <Bar dataKey="logs" radius={[6, 6, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#8A2BE2' : '#00f2fe'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 

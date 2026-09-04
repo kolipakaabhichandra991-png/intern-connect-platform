@@ -1,51 +1,156 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import QRCodeGenerator from "@/components/qrcode/QRCodeGenerator";
+import PomodoroTimer from "@/components/PomodoroTimer";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
+import { useSession, signOut } from "next-auth/react";
+
+const logSchema = z.object({
+  reportOfDay: z.string().min(10, "Report must be at least 10 chars"),
+  learningOfDay: z.string().min(10, "Learning must be at least 10 chars"),
+  meetingOfDay: z.string().min(5, "Meeting info must be at least 5 chars"),
+});
+
+type LogFormValues = z.infer<typeof logSchema>;
 
 export default function InternPanelPage() {
+  const { data: session } = useSession();
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Gamification State
-  const [xp, setXp] = useState(280); // Starts at Level 2 (280/300)
+  const [intern, setIntern] = useState<any>(null);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editBio, setEditBio] = useState("");
+  const [editInstagram, setEditInstagram] = useState("");
+  const [editLinkedIn, setEditLinkedIn] = useState("");
+  const [editGithub, setEditGithub] = useState("");
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<LogFormValues>({
+    resolver: zodResolver(logSchema)
+  });
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/interns/me').then(res => res.json()),
+      fetch('/api/interns').then(res => res.json())
+    ])
+    .then(([meData, allInternsData]) => {
+      if (meData.error) {
+        toast.error(meData.error);
+      } else {
+        setIntern(meData);
+        setEditBio(meData.bio || "");
+        setEditInstagram(meData.instagramId || "");
+        setEditLinkedIn(meData.linkedInId || "");
+        setEditGithub(meData.githubId || "");
+        
+        if (Array.isArray(allInternsData)) {
+          // Filter out the current user, and pick a few others as 'team members'
+          const others = allInternsData.filter(i => i.id !== meData.id);
+          setTeamMembers(others.slice(0, 3));
+        }
+      }
+      setIsLoading(false);
+    })
+    .catch(err => {
+      toast.error("Network error");
+      setIsLoading(false);
+    });
+  }, []);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/interns/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bio: editBio,
+          instagramId: editInstagram,
+          linkedInId: editLinkedIn,
+          githubId: editGithub
+        })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setIntern(updated);
+        setIsEditModalOpen(false);
+        toast.success("Profile updated!");
+      } else {
+        toast.error("Failed to update profile");
+      }
+    } catch(err) {
+      toast.error("Network error");
+    }
+  };
+
+  const xp = intern?.xp || 0;
   const currentLevel = Math.floor(xp / 100) + 1;
   const xpForNextLevel = currentLevel * 100;
   const progressPercent = ((xp % 100) / 100) * 100;
 
-  const handleSubmitLog = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: LogFormValues) => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      
+      if (!res.ok) throw new Error("Failed to submit");
+      
       const newXp = xp + 50;
-      setXp(newXp);
-      setIsSubmitting(false);
+      setIntern({ ...intern, xp: newXp }); // Optimistic update
+      reset();
       
       if (Math.floor(newXp / 100) > Math.floor(xp / 100)) {
-        alert("🎉 LEVEL UP! You earned 50 XP and reached Level " + (currentLevel + 1) + "!");
+        toast.success(`🎉 LEVEL UP! You earned 50 XP and reached Level ${currentLevel + 1}!`);
       } else {
-        alert("+50 XP! Daily Log Submitted Successfully.");
+        toast.success("+50 XP! Daily Log Submitted Successfully.");
       }
-    }, 1000);
+    } catch (error) {
+      toast.error("Failed to submit daily log. Are you logged in?");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Mock data for the logged-in intern
-  const intern = {
-    id: "intern-123",
-    name: "Alex Fielding",
-    designation: "Software Engineering Intern",
-    photoUrl: "https://i.pravatar.cc/300?img=12",
-    department: "Engineering",
-    rating: "4.8",
-    projectsDone: 12,
-    teamName: "Nexus WebGL Core",
-  };
+  if (isLoading) {
+    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center font-bold text-xl">Loading Dashboard...</div>;
+  }
 
-  const teamMembers = [
-    { name: "Sarah Jenkins", role: "Team Lead", img: "https://i.pravatar.cc/150?img=5" },
-    { name: "David Kim", role: "Sr. Engineer", img: "https://i.pravatar.cc/150?img=11" },
-    { name: "Priya Patel", role: "UI/UX", img: "https://i.pravatar.cc/150?img=9" },
-  ];
+  if (!intern) {
+    return (
+      <div className="min-h-screen bg-[#e0e5ec] flex flex-col gap-6 items-center justify-center font-bold text-xl text-slate-900">
+        <div>Error loading profile or unauthorized.</div>
+        <button 
+          onClick={() => signOut({ callbackUrl: '/login' })} 
+          className="px-6 py-2 bg-slate-900 text-white font-bold tracking-widest uppercase rounded-xl text-sm border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all"
+        >
+          Sign Out
+        </button>
+      </div>
+    );
+  }
+
+  // Fallbacks for display
+  const displayIntern = {
+    ...intern,
+    level: currentLevel,
+    age: 21,
+    city: "Remote",
+    bloodGroup: "O+",
+    bio: intern.bio || "No biography provided yet.",
+    photoUrl: intern.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(intern.name)}`
+  };
 
   const upcomingProject = {
     title: "Implement Real-time WebSocket Feed",
@@ -55,8 +160,8 @@ export default function InternPanelPage() {
 
   // Dynamic borders based on Level
   let cardBorder = "border-amber-600 shadow-[0_0_25px_rgba(217,119,6,0.3)]"; // Bronze
-  if (currentLevel >= 3 && currentLevel < 5) cardBorder = "border-black shadow-[0_0_25px_rgba(203,213,225,0.5)]"; // Silver
-  if (currentLevel >= 5) cardBorder = "border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.7)]"; // Gold
+  if (displayIntern.level >= 3 && displayIntern.level < 5) cardBorder = "border-black shadow-[0_0_25px_rgba(203,213,225,0.5)]"; // Silver
+  if (displayIntern.level >= 5) cardBorder = "border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.7)]"; // Gold
 
   return (
     <main className="min-h-screen bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#00f2fe] selection:text-slate-900 relative overflow-hidden pb-20">
@@ -81,7 +186,7 @@ export default function InternPanelPage() {
 
         <div className="mb-10 flex justify-between items-end">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">Welcome back, {intern.name.split(' ')[0]}!</h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">Welcome back, {displayIntern.name.split(' ')[0]}!</h1>
             <p className="text-slate-500">Here's your project roadmap and team overview.</p>
           </div>
           
@@ -102,53 +207,66 @@ export default function InternPanelPage() {
           {/* Left Column: ID Card & Quick Stats */}
           <div className="w-full lg:w-5/12 flex flex-col gap-6">
             
-            {/* Flippable Digital ID */}
-            <div className="perspective-1000">
+            {/* Identity Card Component */}
+            <div className="perspective-1000 w-full h-[400px]">
               <div 
-                className={`relative w-full h-[260px] transition-transform duration-700 preserve-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
+                className={`relative w-full h-full transition-transform duration-700 preserve-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
                 onClick={() => setIsFlipped(!isFlipped)}
               >
                 {/* FRONT */}
-                <div className={`absolute inset-0 backface-hidden bg-white shadow-[6px_6px_0_0_rgba(0,0,0,1)] backdrop-blur-2xl rounded-xl border-2 p-6 flex items-center gap-6 transition-colors duration-500 ${cardBorder}`}>
-                  <div className="absolute top-4 right-5 opacity-30 text-[10px] tracking-widest font-bold">TAP TO FLIP</div>
+                <div className={`absolute inset-0 backface-hidden bg-white shadow-[6px_6px_0_0_rgba(0,0,0,1)] rounded-3xl p-6 flex flex-col items-center border-4 transition-colors duration-500 ${cardBorder}`}>
+                  <div className="absolute top-4 right-6 opacity-30 text-xs tracking-widest font-bold">TAP TO FLIP</div>
                   
-                  <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-[#00f2fe] shadow-[0_0_15px_rgba(0,242,254,0.3)] shrink-0">
-                    <img src={intern.photoUrl} alt={intern.name} className="w-full h-full object-cover" />
+                  <div className={`w-28 h-28 rounded-full overflow-hidden border-4 bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] ${cardBorder} relative mt-2`}>
+                    <img src={displayIntern.photoUrl} alt={displayIntern.name} className="w-full h-full object-cover" />
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-1">{intern.name}</h2>
-                    <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-3">{intern.designation}</p>
-                    <p className="text-slate-500 text-xs mb-1">Dept: <span className="text-slate-900">{intern.department}</span></p>
-                    <p className="text-slate-500 text-xs">Level: <span className="text-slate-900 font-bold">{currentLevel}</span></p>
+                  
+                  <h2 className="text-2xl font-bold text-slate-900 mt-5">{displayIntern.name}</h2>
+                  <p className="text-[#00f2fe] font-bold text-xs mt-1 uppercase tracking-widest text-center">{displayIntern.designation}</p>
+                  
+                  <div className="flex gap-6 mt-auto w-full justify-center border-t border-black pt-5">
+                    <div className="text-center"><p className="text-[10px] text-slate-500 uppercase tracking-widest">Level</p><p className="font-semibold text-slate-900 mt-1 text-xl">{currentLevel}</p></div>
+                    <div className="text-center"><p className="text-[10px] text-slate-500 uppercase tracking-widest">Dept</p><p className="font-semibold text-slate-900 mt-1 text-lg">{displayIntern.department?.substring(0,3).toUpperCase() || 'ENG'}</p></div>
+                    <div className="text-center"><p className="text-[10px] text-slate-500 uppercase tracking-widest">Rating</p><p className="font-semibold text-[#00f2fe] mt-1 text-sm">{displayIntern.rating || '4.8'}</p></div>
                   </div>
                 </div>
 
-                {/* BACK (QR) */}
-                <div className="absolute inset-0 backface-hidden bg-[#ffffff] rounded-xl shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex items-center justify-center backdrop-blur-2xl border border-[#00f2fe]/50 rotate-y-180 gap-8 px-8">
-                  <div className="absolute top-4 left-5 opacity-30 text-[10px] tracking-widest font-bold">TAP TO FLIP</div>
-                  
-                  <div className="bg-white p-2 rounded-xl shadow-[0_0_20px_rgba(0,242,254,0.2)] shrink-0">
-                    <QRCodeGenerator internId={intern.id} name={intern.name} />
+                {/* BACK */}
+                <div className={`absolute inset-0 backface-hidden rotate-y-180 bg-[#0f172a] shadow-[6px_6px_0_0_rgba(0,0,0,1)] p-6 rounded-3xl flex flex-col items-center border-4 border-black text-white`}>
+                  <div className="absolute top-4 right-6 opacity-30 text-xs tracking-widest font-bold">TAP TO FLIP</div>
+                  <h3 className="text-lg font-bold mb-4 mt-2">Security QR</h3>
+                  <div className="bg-white p-2 rounded-xl shadow-[4px_4px_0_0_rgba(255,255,255,0.2)]">
+                    <QRCodeGenerator internId={displayIntern.id} name={displayIntern.name} />
                   </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-bold text-slate-900 tracking-wide leading-tight mb-2">SCAN FOR <br/> PROFILE</h3>
-                    <p className="text-[10px] text-slate-500">Present this to HR for instant access to your dossier.</p>
-                  </div>
+                  <p className="text-[10px] text-slate-400 mt-5 max-w-[200px] text-center leading-relaxed">
+                    This QR validates your active internship status at Belvo.
+                  </p>
+                  <p className="mt-auto text-[10px] tracking-widest text-slate-500 font-mono">ID: {displayIntern.idCardNumber || displayIntern.id.substring(0,8)}</p>
                 </div>
               </div>
             </div>
+
+            <button 
+              onClick={() => setIsEditModalOpen(true)}
+              className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-[#00f2fe] hover:text-slate-900 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all tracking-widest uppercase text-xs mt-2"
+            >
+              Edit Profile
+            </button>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4">
                <div className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black rounded-2xl p-5 shadow-[4px_4px_0_0_rgba(0,0,0,1)] text-center">
                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Projects Done</p>
-                 <p className="text-3xl font-bold text-slate-900">{intern.projectsDone}</p>
+                 <p className="text-3xl font-bold text-slate-900">{displayIntern.projectsDone || 0}</p>
                </div>
                <div className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black rounded-2xl p-5 shadow-[4px_4px_0_0_rgba(0,0,0,1)] text-center">
                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Current Rating</p>
-                 <p className="text-3xl font-bold text-blue-600">★ {intern.rating}</p>
+                 <p className="text-3xl font-bold text-blue-600">★ {displayIntern.rating || 'N/A'}</p>
                </div>
             </div>
+            
+            {/* Interactive Widget: Pomodoro Timer */}
+            <PomodoroTimer />
 
           </div>
 
@@ -179,23 +297,30 @@ export default function InternPanelPage() {
             {/* My Team */}
             <div className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black p-8 rounded-xl shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex-1 flex flex-col justify-center">
               <h3 className="text-xl font-bold tracking-tight text-slate-900 mb-2">My Team</h3>
-              <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-6">Squad: {intern.teamName}</p>
+              <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-6">Squad: {displayIntern.teamName || 'Engineering'}</p>
 
               <div className="flex flex-col gap-4">
-                {teamMembers.map((member, idx) => (
-                  <div key={idx} className="flex items-center gap-4 bg-white border-2 border-black p-3 rounded-2xl hover:bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-colors cursor-pointer border border-transparent hover:border-black">
-                    <img src={member.img} alt={member.name} className="w-12 h-12 rounded-full object-cover border-2 border-black" />
+                {teamMembers.length > 0 ? teamMembers.map((member) => (
+                  <Link href={`/intern-${member.id}`} key={member.id} className="flex items-center gap-4 bg-white border-2 border-black p-3 rounded-2xl hover:bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-colors cursor-pointer border border-transparent hover:border-black group">
+                    <img src={member.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}`} alt={member.name} className="w-12 h-12 rounded-full object-cover border-2 border-black group-hover:border-[#00f2fe] transition-colors" />
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900">{member.name}</h4>
-                      <p className="text-xs text-slate-500">{member.role}</p>
+                      <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#00f2fe] transition-colors">{member.name}</h4>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest">{member.designation || 'Intern'}</p>
                     </div>
-                  </div>
-                ))}
+                    <div className="ml-auto text-slate-400 group-hover:text-slate-900 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </Link>
+                )) : (
+                  <p className="text-sm text-slate-500 italic py-4">You are currently the only intern in this squad!</p>
+                )}
               </div>
             </div>
 
             {/* Submit Daily Log */}
-            <form onSubmit={handleSubmitLog} className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black p-8 rounded-xl shadow-[4px_4px_0_0_rgba(0,0,0,1)] relative overflow-hidden flex flex-col mt-2">
+            <form onSubmit={handleSubmit(onSubmit)} className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black p-8 rounded-xl relative overflow-hidden flex flex-col mt-2">
               <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-transparent via-[#00f2fe] to-transparent opacity-50"></div>
               
               <div className="mb-4">
@@ -207,17 +332,42 @@ export default function InternPanelPage() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">What did you accomplish today?</label>
                   <textarea 
-                    required
-                    className="w-full p-4 bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] rounded-xl border-2 border-black focus:bg-white border-2 border-black focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] outline-none text-sm transition-all text-gray-200 placeholder-slate-400 custom-scrollbar"
+                    {...register("reportOfDay")}
+                    className="w-full p-4 bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] rounded-xl border-2 border-black focus:bg-white focus:border-[#00f2fe] outline-none text-sm transition-all text-slate-900 placeholder-slate-400 custom-scrollbar resize-none"
                     rows={3} 
                     placeholder="Summarize your tasks and progress..."
                   />
+                  {errors.reportOfDay && <p className="text-red-500 text-xs font-bold">{errors.reportOfDay.message}</p>}
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Biggest Learning</label>
+                    <input 
+                      type="text"
+                      {...register("learningOfDay")}
+                      className="w-full p-3 bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] rounded-xl border-2 border-black focus:border-[#00f2fe] outline-none text-sm transition-all text-slate-900 placeholder-slate-400"
+                      placeholder="e.g. React hooks..."
+                    />
+                    {errors.learningOfDay && <p className="text-red-500 text-xs font-bold">{errors.learningOfDay.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Meetings / Blockers</label>
+                    <input 
+                      type="text"
+                      {...register("meetingOfDay")}
+                      className="w-full p-3 bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] rounded-xl border-2 border-black focus:border-[#00f2fe] outline-none text-sm transition-all text-slate-900 placeholder-slate-400"
+                      placeholder="e.g. Daily Standup"
+                    />
+                    {errors.meetingOfDay && <p className="text-red-500 text-xs font-bold">{errors.meetingOfDay.message}</p>}
+                  </div>
+                </div>
+
                 <button 
                   disabled={isSubmitting}
-                  className="w-full bg-[#00f2fe]/20 border border-[#00f2fe]/50 text-slate-900 font-bold py-4 rounded-xl hover:bg-[#00f2fe] hover:text-black hover:shadow-[0_0_20px_rgba(0,242,254,0.4)] active:scale-[0.98] transition-all disabled:opacity-50 tracking-wide"
+                  className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-[#00f2fe] hover:text-slate-900 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all disabled:opacity-50 tracking-widest uppercase text-xs mt-2"
                 >
-                  {isSubmitting ? "Submitting Log..." : "Submit Daily Log"}
+                  {isSubmitting ? "Submitting Log..." : "Submit Log & Claim XP"}
                 </button>
               </div>
             </form>
@@ -227,6 +377,70 @@ export default function InternPanelPage() {
         </div>
 
       </div>
+
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border-4 border-black rounded-2xl p-8 max-w-lg w-full shadow-[8px_8px_0_0_rgba(0,0,0,1)] relative">
+            <button 
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-black font-bold text-xl"
+            >
+              ✕
+            </button>
+            <h2 className="text-2xl font-bold mb-6 text-slate-900">Edit Profile</h2>
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-slate-900 mb-2">Bio</label>
+                <textarea 
+                  value={editBio}
+                  onChange={e => setEditBio(e.target.value)}
+                  className="w-full border-2 border-black rounded-xl p-3 focus:outline-none focus:border-[#00f2fe] shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 resize-none h-24"
+                  placeholder="Tell us about yourself..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-900 mb-2">LinkedIn</label>
+                  <input 
+                    type="text"
+                    value={editLinkedIn}
+                    onChange={e => setEditLinkedIn(e.target.value)}
+                    className="w-full border-2 border-black rounded-xl p-3 focus:outline-none focus:border-[#00f2fe] shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900"
+                    placeholder="Username or URL"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-slate-900 mb-2">Instagram</label>
+                  <input 
+                    type="text"
+                    value={editInstagram}
+                    onChange={e => setEditInstagram(e.target.value)}
+                    className="w-full border-2 border-black rounded-xl p-3 focus:outline-none focus:border-[#00f2fe] shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900"
+                    placeholder="Username or URL"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-slate-900 mb-2">GitHub</label>
+                <input 
+                  type="text"
+                  value={editGithub}
+                  onChange={e => setEditGithub(e.target.value)}
+                  className="w-full border-2 border-black rounded-xl p-3 focus:outline-none focus:border-[#00f2fe] shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900"
+                  placeholder="Username or URL"
+                />
+              </div>
+              <button 
+                type="submit"
+                className="w-full bg-[#00f2fe] text-black font-bold tracking-widest uppercase text-sm py-4 rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all mt-4"
+              >
+                Save Changes
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

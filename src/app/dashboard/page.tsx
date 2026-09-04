@@ -1,19 +1,24 @@
 "use client";
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sparkles, Float, MeshTransmissionMaterial, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import Link from 'next/link';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import InteractivePixelGrid from '@/components/game/InteractivePixelGrid';
+import QRScanner from '@/components/qrcode/QRScanner';
 
-const internsData = [
-  { id: 1, dept: 'engineering' },
-  { id: 2, dept: 'design' },
-  { id: 3, dept: 'marketing' },
-  { id: 4, dept: 'engineering' },
-  { id: 5, dept: 'design' },
-  { id: 6, dept: 'engineering' },
+const weeklyChartData = [
+  { day: 'M', logs: 40 },
+  { day: 'T', logs: 70 },
+  { day: 'W', logs: 45 },
+  { day: 'T', logs: 90 },
+  { day: 'F', logs: 60 },
+  { day: 'S', logs: 100 },
+  { day: 'S', logs: 30 },
 ];
+
+
 
 // 1. Abstract Flowing "B" Logo
 function AbstractLogo() {
@@ -113,53 +118,151 @@ function ThreeScene() {
 // UI OVERLAY COMPONENT
 export default function Dashboard() {
   const [filter, setFilter] = useState('all');
+  const [isScanning, setIsScanning] = useState(false);
+  const [interns, setInterns] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/interns')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setInterns(data);
+        } else {
+          console.error("Expected array but got:", data);
+          setInterns([]);
+        }
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch interns:", err);
+        setInterns([]);
+        setIsLoading(false);
+      });
+  }, []);
+
+  const filteredInterns = Array.isArray(interns) 
+    ? interns.filter(i => filter === 'all' || i.department?.toLowerCase() === filter.toLowerCase())
+    : [];
+
+  // Team Up State
+  const [isTeamUpModalOpen, setIsTeamUpModalOpen] = useState(false);
+  const [selectedInternIds, setSelectedInternIds] = useState<Set<string>>(new Set());
+  const [newTeamName, setNewTeamName] = useState("");
+  const [isSubmittingTeam, setIsSubmittingTeam] = useState(false);
+
+  const handleToggleInternSelection = (id: string) => {
+    const newSet = new Set(selectedInternIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedInternIds(newSet);
+  };
+
+  const handleSaveTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedInternIds.size === 0 || !newTeamName.trim()) return;
+    
+    setIsSubmittingTeam(true);
+    try {
+      await Promise.all(
+        Array.from(selectedInternIds).map(id =>
+          fetch(`/api/interns/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ teamName: newTeamName })
+          })
+        )
+      );
+      
+      // Refresh interns
+      const res = await fetch('/api/interns');
+      const data = await res.json();
+      if (Array.isArray(data)) setInterns(data);
+      
+      setIsTeamUpModalOpen(false);
+      setNewTeamName("");
+      setSelectedInternIds(new Set());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmittingTeam(false);
+    }
+  };
 
   return (
-    <main className="relative w-full h-screen overflow-hidden bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#8A2BE2] selection:text-slate-900">
+    <main className="relative w-full h-screen overflow-hidden bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#8A2BE2] selection:text-white">
       
       {/* Interactive Background */}
       <InteractivePixelGrid />
+      
+      {isScanning && <QRScanner onClose={() => setIsScanning(false)} />}
       
       {/* Fallback ambient glow since 3D is removed */}
       <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-[#8A2BE2] rounded-full blur-[150px] opacity-[0.15] pointer-events-none"></div>
 
       <div className="absolute inset-0 z-10 flex flex-col justify-between pointer-events-none p-6 md:p-10">
         
-        <header className="flex justify-between items-center pointer-events-auto">
-          <div className="text-3xl font-serif tracking-widest font-bold">
-            <span className="text-slate-900">BEL</span>
-            <span className="text-[#8A2BE2]">VO</span>
+        {/* Top Header */}
+        <div className="flex justify-between items-start pointer-events-auto">
+          <div className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] border-2 border-black p-4 rounded-xl backdrop-blur-md">
+            <h1 className="font-serif text-3xl font-bold tracking-tight text-slate-900">BELVO</h1>
           </div>
-          <nav className="hidden md:flex gap-8 items-center text-sm font-medium text-slate-600">
-            <Link href="/dashboard" className="hover:text-slate-900 transition-colors">Directory</Link>
-            <Link href="/reports" className="hover:text-slate-900 transition-colors">Reports</Link>
-            <Link href="/analytics" className="hover:text-slate-900 transition-colors">Analytics</Link>
-            <Link href="/intern-panel" className="bg-[#8A2BE2]/10 border border-[#8A2BE2]/40 px-5 py-2.5 rounded-full text-slate-900 shadow-[0_0_15px_rgba(138,43,226,0.3)] hover:shadow-[0_0_25px_rgba(138,43,226,0.6)] hover:bg-[#8A2BE2]/20 transition-all backdrop-blur-md">
-              Intern Portal
-            </Link>
-          </nav>
-        </header>
-
-        <div className="flex-1 flex flex-col md:flex-row items-end justify-between mt-10 gap-8">
           
-          <div className="pointer-events-auto w-full md:w-1/2 lg:w-1/3 mb-4">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-6 text-slate-900 drop-shadow-[4px_4px_0_rgba(0,0,0,0.1)]">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsTeamUpModalOpen(true)}
+              className="bg-white border-2 border-black px-6 py-2 rounded-xl text-sm font-bold tracking-widest uppercase hover:bg-[#00f2fe] hover:text-slate-900 transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)]"
+            >
+              TEAM UP
+            </button>
+            <button className="bg-white border-2 border-black px-6 py-2 rounded-xl text-sm font-bold tracking-widest uppercase hover:bg-[#8A2BE2] hover:text-white transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)]">
+              REPORTS
+            </button>
+            <div className="w-12 h-12 bg-white border-2 border-black rounded-full overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,1)] cursor-pointer">
+              <img src="https://i.pravatar.cc/150?img=68" alt="Admin" className="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="flex flex-col md:flex-row justify-between items-end gap-6 h-full pb-4">
+          
+          <div className="pointer-events-auto flex flex-col gap-4">
+            <h1 className="text-4xl md:text-5xl font-bold font-serif leading-[1.1] tracking-tight mb-2 text-slate-900">
               INTERN <br/> CONNECT <br/> PLATFORM
             </h1>
             
-            <div className="relative inline-block mt-2 group">
-              <select 
-                onChange={(e) => setFilter(e.target.value)}
-                value={filter}
-                className="appearance-none bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] border-2 border-black backdrop-blur-xl text-slate-900 py-3.5 pl-6 pr-14 rounded-2xl focus:outline-none focus:border-[#8A2BE2] transition-colors cursor-pointer shadow-[4px_4px_0_0_rgba(0,0,0,1)] shadow-black/20 font-medium"
+            <div className="flex flex-wrap items-center gap-4 mt-2">
+              <Link 
+                href="/dashboard/add-intern"
+                className="bg-white border-2 border-black text-slate-900 px-6 h-14 rounded-2xl flex items-center justify-center hover:bg-[#8A2BE2] hover:text-white transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)] font-bold tracking-widest uppercase text-sm"
               >
-                <option value="all" className="bg-[#ffffff]">All Departments</option>
-                <option value="engineering" className="bg-[#ffffff]">Engineering</option>
-                <option value="design" className="bg-[#ffffff]">Design</option>
-                <option value="marketing" className="bg-[#ffffff]">Marketing</option>
-              </select>
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-[#8A2BE2] group-hover:translate-y[-40%] transition-transform">
-                ▼
+                + Add Intern
+              </Link>
+              <button 
+                onClick={() => setIsScanning(true)}
+                className="bg-white border-2 border-black text-slate-900 w-14 h-14 rounded-2xl flex items-center justify-center hover:bg-[#8A2BE2] hover:text-white transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)] group"
+                title="Scan Intern ID"
+              >
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m2 7a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1h6a1 1 0 011 1v2m0 0H9" /></svg>
+              </button>
+              <div className="relative inline-block group">
+                <select 
+                  onChange={(e) => setFilter(e.target.value)}
+                  value={filter}
+                  className="appearance-none bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] border-2 border-black backdrop-blur-xl text-slate-900 py-3.5 pl-6 pr-14 rounded-2xl focus:outline-none focus:border-[#8A2BE2] transition-colors cursor-pointer font-medium h-14"
+                >
+                  <option value="all" className="bg-[#ffffff]">All Departments</option>
+                  <option value="engineering" className="bg-[#ffffff]">Engineering</option>
+                  <option value="design" className="bg-[#ffffff]">Design</option>
+                  <option value="marketing" className="bg-[#ffffff]">Marketing</option>
+                </select>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-[#8A2BE2] group-hover:translate-y-[2px] transition-transform">
+                  ▼
+                </div>
               </div>
             </div>
           </div>
@@ -179,12 +282,14 @@ export default function Dashboard() {
             <div className="space-y-3 relative z-10">
               <h3 className="text-xs uppercase tracking-widest text-slate-500 font-medium">Intern Dossiers</h3>
               <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
-                {internsData.filter(i => filter === 'all' || i.dept === filter).map((intern) => (
-                  <Link href={`/intern-${intern.id}`} key={intern.id} className="flex-shrink-0 w-14 h-14 rounded-full border-2 border-[#8A2BE2]/30 p-0.5 overflow-hidden hover:border-[#8A2BE2] transition-colors cursor-pointer group bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-                    <img src={`https://i.pravatar.cc/150?img=${intern.id + 12}`} alt="avatar" className="w-full h-full rounded-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" />
+                {isLoading ? (
+                  <p className="text-sm text-slate-400 italic py-2">Loading interns...</p>
+                ) : filteredInterns.map((intern) => (
+                  <Link href={`/intern-${intern.id}`} key={intern.id} title={intern.name} className="flex-shrink-0 w-14 h-14 rounded-full border-2 border-[#8A2BE2]/30 p-0.5 overflow-hidden hover:border-[#8A2BE2] transition-colors cursor-pointer group bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+                    <img src={intern.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(intern.name)}`} alt={intern.name} className="w-full h-full rounded-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" />
                   </Link>
                 ))}
-                {internsData.filter(i => filter === 'all' || i.dept === filter).length === 0 && (
+                {!isLoading && filteredInterns.length === 0 && (
                   <p className="text-sm text-slate-400 italic py-2">No interns in this department.</p>
                 )}
               </div>
@@ -192,17 +297,40 @@ export default function Dashboard() {
 
             <div className="space-y-3 relative z-10">
               <h3 className="text-xs uppercase tracking-widest text-slate-500 font-medium">Daily Logs Activity</h3>
-              <div className="h-28 flex items-end justify-between gap-2 px-1">
-                {[40, 70, 45, 90, 60, 100, 30].map((h, i) => (
-                  <div key={i} className="w-full bg-gradient-to-t from-[#8A2BE2]/10 to-[#8A2BE2]/40 rounded-t-md relative group cursor-pointer hover:to-[#8A2BE2]/80 transition-colors border-t border-[#8A2BE2]/30" style={{ height: `${h}%` }}>
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#e0e5ec] border border-[#8A2BE2]/50 px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-                      {h} Logs
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between px-2 text-[10px] text-slate-400 uppercase font-bold mt-1">
-                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+              <div className="h-32 w-full relative -ml-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyChartData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                    <XAxis 
+                      dataKey="day" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }} 
+                      dy={5} 
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#94a3b8', fontSize: 10 }} 
+                    />
+                    <Tooltip 
+                      cursor={{ fill: 'rgba(138, 43, 226, 0.1)' }}
+                      contentStyle={{ borderRadius: '8px', border: '2px solid #000', boxShadow: '4px 4px 0 0 rgba(0,0,0,1)', fontWeight: 'bold', fontSize: '12px', padding: '4px 8px' }}
+                      itemStyle={{ color: '#8A2BE2' }}
+                    />
+                    <Bar dataKey="logs" radius={[4, 4, 0, 0]}>
+                      {weeklyChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill="url(#colorUv)" />
+                      ))}
+                    </Bar>
+                    <defs>
+                      <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8A2BE2" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#8A2BE2" stopOpacity={0.2}/>
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
@@ -226,6 +354,71 @@ export default function Dashboard() {
           </aside>
         </div>
       </div>
+
+      {isTeamUpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm pointer-events-auto">
+          <div className="bg-white border-4 border-black p-6 rounded-3xl w-full max-w-lg shadow-[8px_8px_0_0_rgba(0,0,0,1)] max-h-[90vh] flex flex-col">
+            <h2 className="text-2xl font-bold uppercase tracking-tight text-slate-900 mb-6">Team Up Interns</h2>
+            
+            <form onSubmit={handleSaveTeam} className="flex flex-col flex-1 overflow-hidden">
+              <div className="mb-4">
+                <label className="block text-xs uppercase tracking-widest font-bold text-slate-500 mb-2">Squad Name</label>
+                <input 
+                  type="text" 
+                  required
+                  value={newTeamName}
+                  onChange={e => setNewTeamName(e.target.value)}
+                  className="w-full bg-slate-50 border-2 border-black rounded-xl p-3 text-sm focus:outline-none focus:border-[#8A2BE2] shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-colors"
+                  placeholder="e.g. Next-Gen Frontend"
+                />
+              </div>
+
+              <label className="block text-xs uppercase tracking-widest font-bold text-slate-500 mb-2">Select Interns</label>
+              <div className="flex-1 overflow-y-auto custom-scrollbar border-2 border-black rounded-xl bg-slate-50 p-2 mb-6">
+                {interns.length > 0 ? interns.map(intern => (
+                  <div 
+                    key={intern.id} 
+                    onClick={() => handleToggleInternSelection(intern.id)}
+                    className={`flex items-center gap-3 p-3 rounded-lg mb-2 cursor-pointer transition-colors border-2 ${
+                      selectedInternIds.has(intern.id) ? 'bg-[#00f2fe]/10 border-[#00f2fe]' : 'bg-white border-transparent hover:border-black/10'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selectedInternIds.has(intern.id) ? 'border-[#00f2fe] bg-[#00f2fe]' : 'border-slate-300 bg-white'}`}>
+                      {selectedInternIds.has(intern.id) && (
+                        <svg className="w-3 h-3 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      )}
+                    </div>
+                    <img src={intern.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(intern.name)}`} alt={intern.name} className="w-8 h-8 rounded-full object-cover border border-slate-300" />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-slate-900">{intern.name}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-slate-500">{intern.teamName || 'Unassigned'}</p>
+                    </div>
+                  </div>
+                )) : (
+                  <p className="text-center text-sm text-slate-500 p-4">No interns found.</p>
+                )}
+              </div>
+
+              <div className="flex gap-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsTeamUpModalOpen(false)}
+                  className="flex-1 py-3 border-2 border-black rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSubmittingTeam || selectedInternIds.size === 0 || !newTeamName.trim()}
+                  className="flex-1 py-3 bg-[#00f2fe] border-2 border-black rounded-xl font-bold uppercase tracking-widest text-xs shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {isSubmittingTeam ? 'Saving...' : 'Confirm Team'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       
       <style dangerouslySetInnerHTML={{__html: `
         .custom-scrollbar::-webkit-scrollbar {
