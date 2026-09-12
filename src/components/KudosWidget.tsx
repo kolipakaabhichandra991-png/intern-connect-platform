@@ -65,7 +65,7 @@ export default function KudosWidget({ teamMembers }: { teamMembers: any[] }) {
         <select 
           value={receiverId}
           onChange={(e) => setReceiverId(e.target.value)}
-          className="w-full border-2 border-black rounded-lg p-2 text-sm focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+          className="w-full border-2 border-black rounded-lg p-2 text-sm focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900"
         >
           <option value="">Select a teammate...</option>
           {teamMembers.map(m => (
@@ -79,7 +79,7 @@ export default function KudosWidget({ teamMembers }: { teamMembers: any[] }) {
             placeholder="You are awesome because..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            className="flex-1 border-2 border-black rounded-lg p-2 text-sm focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)]"
+            className="flex-1 border-2 border-black rounded-lg p-2 text-sm focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder:text-slate-400"
           />
           <button 
             type="submit"

@@ -68,11 +68,11 @@ export default function ResourceHub() {
         {/* Admin Add Form */}
         {isAdmin && (
           <form onSubmit={handleAddResource} className="bg-white border-2 border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)] rounded-2xl p-6 flex flex-col gap-4">
-            <h3 className="text-lg font-bold">Add New Resource (Admin Only)</h3>
+            <h3 className="text-lg font-bold text-slate-900">Add New Resource (Admin Only)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" placeholder="Title" required value={title} onChange={e => setTitle(e.target.value)} className="border-2 border-black p-3 rounded-xl focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)]" />
-              <input type="url" placeholder="URL (https://...)" required value={url} onChange={e => setUrl(e.target.value)} className="border-2 border-black p-3 rounded-xl focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)]" />
-              <input type="text" placeholder="Description" required value={description} onChange={e => setDescription(e.target.value)} className="border-2 border-black p-3 rounded-xl focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] md:col-span-2" />
+              <input type="text" placeholder="Title" required value={title} onChange={e => setTitle(e.target.value)} className="border-2 border-black p-3 rounded-xl focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder:text-slate-400" />
+              <input type="url" placeholder="URL (https://...)" required value={url} onChange={e => setUrl(e.target.value)} className="border-2 border-black p-3 rounded-xl focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder:text-slate-400" />
+              <input type="text" placeholder="Description" required value={description} onChange={e => setDescription(e.target.value)} className="border-2 border-black p-3 rounded-xl focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] md:col-span-2 text-slate-900 placeholder:text-slate-400" />
             </div>
             <button disabled={isSubmitting} className="bg-[#00f2fe] text-black font-bold py-3 rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all uppercase tracking-widest text-sm self-end px-8">
               {isSubmitting ? "Adding..." : "Add Resource"}
