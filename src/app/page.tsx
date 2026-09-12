@@ -93,10 +93,10 @@ const MiniGame = () => {
   };
 
   return (
-    <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col items-center rotate-2 w-full max-w-sm mx-auto">
+    <div className="bg-white text-black border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col items-center rotate-2 w-full max-w-sm mx-auto">
       <div className="flex justify-between w-full items-center mb-6">
-        <h3 className="font-black text-xl uppercase tracking-widest">Tic Tac Toe</h3>
-        <span className="font-black text-lg bg-[#00f2fe] px-3 py-1 border-2 border-black">
+        <h3 className="font-black text-xl uppercase tracking-widest text-black">Tic Tac Toe</h3>
+        <span className="font-black text-lg text-black bg-[#00f2fe] px-3 py-1 border-2 border-black">
           {winner ? (winner === 'X' ? 'YOU WIN!' : 'CPU WINS!') : isDraw ? 'DRAW!' : `NEXT: ${xIsNext ? 'YOU' : 'CPU'}`}
         </span>
       </div>
