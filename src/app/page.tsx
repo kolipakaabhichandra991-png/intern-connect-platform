@@ -1,8 +1,64 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Zap, Brain, Trophy, BookOpen, Shield } from 'lucide-react';
+
+const MiniGame = () => {
+  const [score, setScore] = useState(0);
+  const [activeBug, setActiveBug] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const interval = setInterval(() => {
+      setActiveBug(Math.floor(Math.random() * 9));
+    }, 800);
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  const handleWhack = (index: number) => {
+    if (!isPlaying) return;
+    if (index === activeBug) {
+      setScore(s => s + 10);
+      setActiveBug(null);
+    } else {
+      setScore(s => Math.max(0, s - 5));
+    }
+  };
+
+  return (
+    <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col items-center rotate-2 w-full max-w-sm mx-auto">
+      <div className="flex justify-between w-full items-center mb-6">
+        <h3 className="font-black text-xl uppercase tracking-widest">Fix Bugs</h3>
+        <span className="font-black text-xl bg-[#00f2fe] px-3 py-1 border-2 border-black">{score} XP</span>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-3 mb-6 w-full aspect-square">
+        {[0,1,2,3,4,5,6,7,8].map((i) => (
+          <motion.button
+            key={i}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => handleWhack(i)}
+            className={`border-4 border-black flex items-center justify-center text-4xl transition-colors ${activeBug === i ? 'bg-[#ffdb00]' : 'bg-slate-100 hover:bg-slate-200'}`}
+          >
+            {activeBug === i && <motion.span initial={{scale:0}} animate={{scale:1}}>🐛</motion.span>}
+          </motion.button>
+        ))}
+      </div>
+
+      {!isPlaying ? (
+        <button onClick={() => { setIsPlaying(true); setScore(0); }} className="w-full bg-[#8A2BE2] text-white font-black uppercase tracking-widest py-3 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">
+          Start Debugging
+        </button>
+      ) : (
+        <button onClick={() => setIsPlaying(false)} className="w-full bg-[#ff3366] text-white font-black uppercase tracking-widest py-3 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">
+          Stop
+        </button>
+      )}
+    </div>
+  );
+};
 
 export default function HomePage() {
   return (
@@ -23,55 +79,64 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <main className="relative pt-20 pb-32 px-6 flex flex-col items-center justify-center text-center">
+      <main className="relative pt-12 pb-32 px-6 max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-16">
+        
         {/* Floating background shapes */}
         <motion.div 
           animate={{ rotate: 360 }} 
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute top-20 left-[10%] w-32 h-32 bg-[#00f2fe] border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] -z-10 hidden md:block"
+          className="absolute top-10 left-[45%] w-24 h-24 bg-[#00f2fe] border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] -z-10 hidden md:block"
         />
         <motion.div 
           animate={{ rotate: -360, y: [0, 20, 0] }} 
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-40 right-[10%] w-24 h-24 bg-[#8A2BE2] rounded-full border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] -z-10 hidden md:block"
-        />
-        <motion.div 
-          animate={{ x: [0, 30, 0], y: [0, -30, 0] }} 
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/2 left-[80%] w-16 h-16 bg-[#ffdb00] border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] rotate-45 -z-10 hidden md:block"
+          className="absolute bottom-10 right-[5%] w-32 h-32 bg-[#8A2BE2] rounded-full border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] -z-10 hidden md:block"
         />
 
-        <motion.h1 
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, type: "spring", bounce: 0.5 }}
-          className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-black max-w-5xl leading-[1.1] mb-6"
-        >
-          The Ultimate <br/> 
-          <span className="bg-[#8A2BE2] text-white px-4 pb-2 border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] inline-block -rotate-2 my-2">Internship</span> <br/>
-          Experience.
-        </motion.h1>
-
-        <motion.p 
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-xl md:text-2xl text-slate-700 font-medium max-w-2xl mb-12"
-        >
-          Elevate your career with AI-driven insights, gamified progress, and seamless team collaboration.
-        </motion.p>
-
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <a 
-            href="#join"
-            className="group relative inline-flex items-center justify-center gap-4 bg-white text-black font-black uppercase tracking-widest text-xl px-12 py-5 border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:bg-[#ffdb00] hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all"
+        {/* Left Column - Text */}
+        <div className="flex-1 text-left z-10">
+          <motion.h1 
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.6, type: "spring", bounce: 0.5 }}
+            className="text-6xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter text-black leading-[1.1] mb-6"
           >
-            Get Started <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
-          </a>
+            The Ultimate <br/> 
+            <span className="bg-[#8A2BE2] text-white px-4 pb-2 border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] inline-block -rotate-2 my-2">Internship</span> <br/>
+            Experience.
+          </motion.h1>
+
+          <motion.p 
+            initial={{ x: -30, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-xl md:text-2xl text-slate-700 font-medium max-w-2xl mb-12"
+          >
+            Elevate your career with AI-driven insights, gamified progress, and seamless team collaboration.
+          </motion.p>
+
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <a 
+              href="#join"
+              className="group relative inline-flex items-center justify-center gap-4 bg-white text-black font-black uppercase tracking-widest text-xl px-12 py-5 border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:bg-[#ffdb00] hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all"
+            >
+              Get Started <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+            </a>
+          </motion.div>
+        </div>
+
+        {/* Right Column - Mini Game */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="flex-1 w-full flex justify-center lg:justify-end z-10"
+        >
+          <MiniGame />
         </motion.div>
       </main>
 
