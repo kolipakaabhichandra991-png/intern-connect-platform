@@ -5,57 +5,74 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Zap, Brain, Trophy, BookOpen, Shield } from 'lucide-react';
 
 const MiniGame = () => {
-  const [score, setScore] = useState(0);
-  const [activeBug, setActiveBug] = useState<number | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [board, setBoard] = useState(Array(9).fill(null));
+  const [xIsNext, setXIsNext] = useState(true);
 
-  useEffect(() => {
-    if (!isPlaying) return;
-    const interval = setInterval(() => {
-      setActiveBug(Math.floor(Math.random() * 9));
-    }, 800);
-    return () => clearInterval(interval);
-  }, [isPlaying]);
-
-  const handleWhack = (index: number) => {
-    if (!isPlaying) return;
-    if (index === activeBug) {
-      setScore(s => s + 10);
-      setActiveBug(null);
-    } else {
-      setScore(s => Math.max(0, s - 5));
+  const checkWinner = (squares: any[]) => {
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+    for (let i = 0; i < lines.length; i++) {
+      const [a, b, c] = lines[i];
+      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+        return squares[a];
+      }
     }
+    return null;
+  };
+
+  const winner = checkWinner(board);
+  const isDraw = !winner && board.every(Boolean);
+
+  const handleClick = (i: number) => {
+    if (board[i] || winner) return;
+    const newBoard = [...board];
+    newBoard[i] = xIsNext ? 'X' : 'O';
+    setBoard(newBoard);
+    setXIsNext(!xIsNext);
+  };
+
+  const resetGame = () => {
+    setBoard(Array(9).fill(null));
+    setXIsNext(true);
   };
 
   return (
     <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] flex flex-col items-center rotate-2 w-full max-w-sm mx-auto">
       <div className="flex justify-between w-full items-center mb-6">
-        <h3 className="font-black text-xl uppercase tracking-widest">Fix Bugs</h3>
-        <span className="font-black text-xl bg-[#00f2fe] px-3 py-1 border-2 border-black">{score} XP</span>
+        <h3 className="font-black text-xl uppercase tracking-widest">Tic Tac Toe</h3>
+        <span className="font-black text-lg bg-[#00f2fe] px-3 py-1 border-2 border-black">
+          {winner ? `WINNER: ${winner}` : isDraw ? 'DRAW!' : `NEXT: ${xIsNext ? 'X' : 'O'}`}
+        </span>
       </div>
       
       <div className="grid grid-cols-3 gap-3 mb-6 w-full aspect-square">
-        {[0,1,2,3,4,5,6,7,8].map((i) => (
+        {board.map((cell, i) => (
           <motion.button
             key={i}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => handleWhack(i)}
-            className={`border-4 border-black flex items-center justify-center text-4xl transition-colors ${activeBug === i ? 'bg-[#ffdb00]' : 'bg-slate-100 hover:bg-slate-200'}`}
+            whileTap={{ scale: cell || winner ? 1 : 0.9 }}
+            onClick={() => handleClick(i)}
+            disabled={!!cell || !!winner}
+            className={`border-4 border-black flex items-center justify-center text-5xl font-black transition-colors ${
+              cell === 'X' ? 'bg-[#8A2BE2] text-white' : 
+              cell === 'O' ? 'bg-[#ffdb00] text-black' : 
+              'bg-slate-100 hover:bg-slate-200 cursor-pointer'
+            }`}
           >
-            {activeBug === i && <motion.span initial={{scale:0}} animate={{scale:1}}>🐛</motion.span>}
+            {cell && (
+              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                {cell}
+              </motion.span>
+            )}
           </motion.button>
         ))}
       </div>
 
-      {!isPlaying ? (
-        <button onClick={() => { setIsPlaying(true); setScore(0); }} className="w-full bg-[#8A2BE2] text-white font-black uppercase tracking-widest py-3 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">
-          Start Debugging
-        </button>
-      ) : (
-        <button onClick={() => setIsPlaying(false)} className="w-full bg-[#ff3366] text-white font-black uppercase tracking-widest py-3 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all">
-          Stop
-        </button>
-      )}
+      <button onClick={resetGame} className="w-full bg-black text-white font-black uppercase tracking-widest py-3 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all hover:bg-[#00f2fe] hover:text-black">
+        {winner || isDraw ? 'Play Again' : 'Reset Game'}
+      </button>
     </div>
   );
 };
