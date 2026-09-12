@@ -125,6 +125,12 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
+  // Multiple selection for bulk team updates
+  const [isTeamUpModalOpen, setIsTeamUpModalOpen] = useState(false);
+  const [selectedInternIds, setSelectedInternIds] = useState<Set<string>>(new Set());
+  const [newTeamName, setNewTeamName] = useState("");
+  const [isSubmittingTeam, setIsSubmittingTeam] = useState(false);
+
   useEffect(() => {
     if (status === "unauthenticated") return;
     
@@ -177,12 +183,6 @@ export default function AdminDashboard() {
   // Calculate some stats
   const totalXP = interns.reduce((sum, i) => sum + (i.xp || 0), 0);
   const avgXP = interns.length ? Math.round(totalXP / interns.length) : 0;
-
-  // Multiple selection for bulk team updates
-  const [isTeamUpModalOpen, setIsTeamUpModalOpen] = useState(false);
-  const [selectedInternIds, setSelectedInternIds] = useState<Set<string>>(new Set());
-  const [newTeamName, setNewTeamName] = useState("");
-  const [isSubmittingTeam, setIsSubmittingTeam] = useState(false);
 
   const handleToggleInternSelection = (id: string) => {
     const newSet = new Set(selectedInternIds);
