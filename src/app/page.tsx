@@ -26,12 +26,65 @@ const MiniGame = () => {
   const winner = checkWinner(board);
   const isDraw = !winner && board.every(Boolean);
 
-  const handleClick = (i: number) => {
-    if (board[i] || winner) return;
+  // Computer AI logic
+  useEffect(() => {
+    if (!xIsNext && !winner && !isDraw) {
+      const timer = setTimeout(() => {
+        const lines = [
+          [0, 1, 2], [3, 4, 5], [6, 7, 8],
+          [0, 3, 6], [1, 4, 7], [2, 5, 8],
+          [0, 4, 8], [2, 4, 6]
+        ];
+        
+        let bestMove: number | null = null;
+
+        // 1. Try to win
+        for (let i = 0; i < lines.length; i++) {
+          const [a, b, c] = lines[i];
+          if (board[a] === 'O' && board[b] === 'O' && !board[c]) bestMove = c;
+          if (board[a] === 'O' && !board[b] && board[c] === 'O') bestMove = b;
+          if (!board[a] && board[b] === 'O' && board[c] === 'O') bestMove = a;
+        }
+
+        // 2. Block player if we can't win
+        if (bestMove === null) {
+          for (let i = 0; i < lines.length; i++) {
+            const [a, b, c] = lines[i];
+            if (board[a] === 'X' && board[b] === 'X' && !board[c]) bestMove = c;
+            if (board[a] === 'X' && !board[b] && board[c] === 'X') bestMove = b;
+            if (!board[a] && board[b] === 'X' && board[c] === 'X') bestMove = a;
+          }
+        }
+
+        // 3. Take center if open
+        if (bestMove === null && !board[4]) bestMove = 4;
+
+        // 4. Random available
+        if (bestMove === null) {
+          const available = board.map((v, i) => v === null ? i : null).filter(v => v !== null) as number[];
+          if (available.length > 0) {
+            bestMove = available[Math.floor(Math.random() * available.length)];
+          }
+        }
+
+        if (bestMove !== null) {
+          const newBoard = [...board];
+          newBoard[bestMove] = 'O';
+          setBoard(newBoard);
+          setXIsNext(true);
+        }
+      }, 500); // 500ms delay to feel like the computer is "thinking"
+      return () => clearTimeout(timer);
+    }
+  }, [xIsNext, board, winner, isDraw]);
+
+  const handlePlayerClick = (i: number) => {
+    // Prevent clicking if it's not the player's turn, or if game is over, or square is filled
+    if (!xIsNext || board[i] || winner) return;
     const newBoard = [...board];
-    newBoard[i] = xIsNext ? 'X' : 'O';
+    newBoard[i] = 'X';
     setBoard(newBoard);
-    setXIsNext(!xIsNext);
+    setXIsNext(false);
   };
 
   const resetGame = () => {
@@ -44,7 +97,7 @@ const MiniGame = () => {
       <div className="flex justify-between w-full items-center mb-6">
         <h3 className="font-black text-xl uppercase tracking-widest">Tic Tac Toe</h3>
         <span className="font-black text-lg bg-[#00f2fe] px-3 py-1 border-2 border-black">
-          {winner ? `WINNER: ${winner}` : isDraw ? 'DRAW!' : `NEXT: ${xIsNext ? 'X' : 'O'}`}
+          {winner ? (winner === 'X' ? 'YOU WIN!' : 'CPU WINS!') : isDraw ? 'DRAW!' : `NEXT: ${xIsNext ? 'YOU' : 'CPU'}`}
         </span>
       </div>
       
@@ -52,9 +105,9 @@ const MiniGame = () => {
         {board.map((cell, i) => (
           <motion.button
             key={i}
-            whileTap={{ scale: cell || winner ? 1 : 0.9 }}
-            onClick={() => handleClick(i)}
-            disabled={!!cell || !!winner}
+            whileTap={{ scale: cell || winner || !xIsNext ? 1 : 0.9 }}
+            onClick={() => handlePlayerClick(i)}
+            disabled={!!cell || !!winner || !xIsNext}
             className={`border-4 border-black flex items-center justify-center text-5xl font-black transition-colors ${
               cell === 'X' ? 'bg-[#8A2BE2] text-white' : 
               cell === 'O' ? 'bg-[#ffdb00] text-black' : 
