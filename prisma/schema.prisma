@@ -13,13 +13,44 @@ model User {
   email         String   @unique
   passwordHash  String
   role          String   @default("INTERN")
+  
+  otpCode       String?
+  otpExpiresAt  DateTime?
+
+  xp            Int      @default(0) // Gamification points
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   internProfile InternProfile?
   givenReviews  Review[]       @relation("Reviewer")
   hrReviews     DailyReport[]  @relation("HrReviewer")
+
+  sentKudos     Kudo[]         @relation("Sender")
+  receivedKudos Kudo[]         @relation("Receiver")
 }
+
+model Kudo {
+  id         String   @id @default(cuid())
+  message    String
+  createdAt  DateTime @default(now())
+
+  senderId   String
+  receiverId String
+  
+  sender     User     @relation("Sender", fields: [senderId], references: [id])
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  url         String
+  category    String   @default("General")
+  createdAt   DateTime @default(now())
+}
+
 
 model InternProfile {
   id                String   @id @default(cuid())

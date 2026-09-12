@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useSession, signOut } from "next-auth/react";
+import InteractivePixelGrid from '@/components/game/InteractivePixelGrid';
+import KudosWidget from '@/components/KudosWidget';
 
 const logSchema = z.object({
   reportOfDay: z.string().min(10, "Report must be at least 10 chars"),
@@ -21,6 +23,7 @@ export default function InternPanelPage() {
   const { data: session } = useSession();
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   
   const [intern, setIntern] = useState<any>(null);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -166,22 +169,56 @@ export default function InternPanelPage() {
   return (
     <main className="min-h-screen bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#00f2fe] selection:text-slate-900 relative overflow-hidden pb-20">
       
+      <InteractivePixelGrid />
+
       {/* Background ambient glow - using cyan/blue for Intern view */}
       <div className="absolute top-[10%] left-[10%] w-[500px] h-[500px] bg-[#00f2fe] rounded-full blur-[180px] opacity-[0.15] pointer-events-none"></div>
 
       <div className="relative z-10 p-6 md:p-10 max-w-7xl mx-auto">
         
-        {/* Header */}
-        <header className="flex justify-between items-center mb-12">
-          <div className="text-3xl font-serif tracking-widest font-bold">
-            <span className="text-slate-900">BEL</span>
-            <span className="text-blue-600">VO</span>
-            <span className="text-xs ml-3 bg-white shadow-[2px_2px_0_0_rgba(0,0,0,1)] px-2 py-1 rounded-md text-slate-600 tracking-normal font-sans align-middle">Intern Portal</span>
+        {/* Top Header */}
+        <header className="flex justify-between items-start mb-12 pointer-events-auto">
+          <div className="flex items-center gap-4">
+            <div className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] border-2 border-black p-4 rounded-xl backdrop-blur-md block">
+              <h1 className="font-serif text-3xl font-bold tracking-tight text-slate-900">BELVO</h1>
+            </div>
+            <span className="hidden md:inline-block bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] border-2 border-black px-4 py-2 rounded-xl text-sm font-bold tracking-widest uppercase text-slate-900">
+              INTERN PORTAL
+            </span>
           </div>
-          <nav className="hidden md:flex gap-8 items-center text-sm font-medium text-slate-600">
-            <span className="text-slate-900 font-bold">My Workspace</span>
-            <Link href="/" className="hover:text-red-400 transition-colors">Sign Out</Link>
-          </nav>
+          
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block bg-white border-2 border-black px-6 py-2 rounded-xl text-sm font-bold tracking-widest uppercase shadow-[4px_4px_0_0_rgba(0,0,0,1)] cursor-default">
+              MY WORKSPACE
+            </div>
+            
+            <div className="relative">
+              <div 
+                className="w-12 h-12 bg-white border-2 border-black rounded-full overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,1)] cursor-pointer hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)] transition-all"
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              >
+                <img src={session?.user?.image || displayIntern.photoUrl || "https://i.pravatar.cc/150?img=68"} alt="Intern" className="w-full h-full object-cover" />
+              </div>
+
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-4 w-48 bg-white border-2 border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)] rounded-xl overflow-hidden z-50 flex flex-col pointer-events-auto">
+                  <div className="p-4 border-b-2 border-black bg-slate-50">
+                    <p className="text-sm font-bold text-slate-900">{session?.user?.name || displayIntern.name || "Intern"}</p>
+                    <p className="text-xs text-slate-500 font-medium mt-1 truncate">{session?.user?.email || "intern@belvo.com"}</p>
+                  </div>
+                  <button className="text-left px-4 py-3 text-sm font-bold text-slate-700 hover:bg-[#00f2fe] hover:text-slate-900 transition-colors border-b-2 border-slate-100">
+                    Settings
+                  </button>
+                  <button 
+                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    className="text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-500 hover:text-white transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </header>
 
         <div className="mb-10 flex justify-between items-end">
@@ -294,29 +331,28 @@ export default function InternPanelPage() {
               </div>
             </div>
 
-            {/* My Team */}
-            <div className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black p-8 rounded-xl shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex-1 flex flex-col justify-center">
-              <h3 className="text-xl font-bold tracking-tight text-slate-900 mb-2">My Team</h3>
-              <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-6">Squad: {displayIntern.teamName || 'Engineering'}</p>
+            {/* My Team & Kudos Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black p-6 rounded-xl shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex flex-col justify-center">
+                <h3 className="text-xl font-bold tracking-tight text-slate-900 mb-2">My Team</h3>
+                <p className="text-blue-600 text-xs font-bold uppercase tracking-widest mb-6">Squad: {displayIntern.teamName || 'Engineering'}</p>
 
-              <div className="flex flex-col gap-4">
-                {teamMembers.length > 0 ? teamMembers.map((member) => (
-                  <Link href={`/intern-${member.id}`} key={member.id} className="flex items-center gap-4 bg-white border-2 border-black p-3 rounded-2xl hover:bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-colors cursor-pointer border border-transparent hover:border-black group">
-                    <img src={member.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}`} alt={member.name} className="w-12 h-12 rounded-full object-cover border-2 border-black group-hover:border-[#00f2fe] transition-colors" />
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#00f2fe] transition-colors">{member.name}</h4>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest">{member.designation || 'Intern'}</p>
-                    </div>
-                    <div className="ml-auto text-slate-400 group-hover:text-slate-900 transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </Link>
-                )) : (
-                  <p className="text-sm text-slate-500 italic py-4">You are currently the only intern in this squad!</p>
-                )}
+                <div className="flex flex-col gap-4">
+                  {teamMembers.length > 0 ? teamMembers.map((member) => (
+                    <Link href={`/intern-${member.id}`} key={member.id} className="flex items-center gap-4 bg-white border-2 border-black p-3 rounded-2xl hover:bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-colors cursor-pointer border border-transparent hover:border-black group">
+                      <img src={member.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}`} alt={member.name} className="w-12 h-12 rounded-full object-cover border-2 border-black group-hover:border-[#00f2fe] transition-colors" />
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#00f2fe] transition-colors">{member.name}</h4>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">{member.designation || 'Intern'}</p>
+                      </div>
+                    </Link>
+                  )) : (
+                    <p className="text-sm text-slate-500 italic py-4">You are currently the only intern in this squad!</p>
+                  )}
+                </div>
               </div>
+              
+              <KudosWidget teamMembers={teamMembers} />
             </div>
 
             {/* Submit Daily Log */}

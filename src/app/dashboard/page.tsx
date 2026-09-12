@@ -4,6 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sparkles, Float, MeshTransmissionMaterial, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import Link from 'next/link';
+import { signOut, useSession } from 'next-auth/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import InteractivePixelGrid from '@/components/game/InteractivePixelGrid';
 import QRScanner from '@/components/qrcode/QRScanner';
@@ -117,10 +118,12 @@ function ThreeScene() {
 
 // UI OVERLAY COMPONENT
 export default function Dashboard() {
+  const { data: session } = useSession();
   const [filter, setFilter] = useState('all');
   const [isScanning, setIsScanning] = useState(false);
   const [interns, setInterns] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/interns')
@@ -141,11 +144,20 @@ export default function Dashboard() {
       });
   }, []);
 
-  const filteredInterns = Array.isArray(interns) 
-    ? interns.filter(i => filter === 'all' || i.department?.toLowerCase() === filter.toLowerCase())
-    : [];
+  // Filter interns
+  const filteredInterns = interns.filter(i => {
+    if (filter === 'all') return true;
+    if (filter === 'tech') return i.department === 'Engineering' || i.department === 'Tech';
+    if (filter === 'design') return i.department === 'Design';
+    if (filter === 'marketing') return i.department === 'Marketing';
+    return true;
+  });
 
-  // Team Up State
+  // Calculate some stats
+  const totalXP = interns.reduce((sum, i) => sum + (i.xp || 0), 0);
+  const avgXP = interns.length ? Math.round(totalXP / interns.length) : 0;
+
+  // Multiple selection for bulk team updates
   const [isTeamUpModalOpen, setIsTeamUpModalOpen] = useState(false);
   const [selectedInternIds, setSelectedInternIds] = useState<Set<string>>(new Set());
   const [newTeamName, setNewTeamName] = useState("");
@@ -163,7 +175,7 @@ export default function Dashboard() {
 
   const handleSaveTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedInternIds.size === 0 || !newTeamName.trim()) return;
+    if (!newTeamName.trim() || selectedInternIds.size === 0) return;
     
     setIsSubmittingTeam(true);
     try {
@@ -177,14 +189,13 @@ export default function Dashboard() {
         )
       );
       
-      // Refresh interns
       const res = await fetch('/api/interns');
       const data = await res.json();
       if (Array.isArray(data)) setInterns(data);
       
       setIsTeamUpModalOpen(false);
-      setNewTeamName("");
       setSelectedInternIds(new Set());
+      setNewTeamName("");
     } catch (err) {
       console.error(err);
     } finally {
@@ -218,11 +229,34 @@ export default function Dashboard() {
             >
               TEAM UP
             </button>
-            <button className="bg-white border-2 border-black px-6 py-2 rounded-xl text-sm font-bold tracking-widest uppercase hover:bg-[#8A2BE2] hover:text-white transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)]">
+            <Link href="/reports" className="bg-white border-2 border-black px-6 py-2 rounded-xl text-sm font-bold tracking-widest uppercase hover:bg-[#8A2BE2] hover:text-white transition-all shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)] block">
               REPORTS
-            </button>
-            <div className="w-12 h-12 bg-white border-2 border-black rounded-full overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,1)] cursor-pointer">
-              <img src="https://i.pravatar.cc/150?img=68" alt="Admin" className="w-full h-full object-cover" />
+            </Link>
+            <div className="relative">
+              <div 
+                className="w-12 h-12 bg-white border-2 border-black rounded-full overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,1)] cursor-pointer hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)] transition-all"
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              >
+                <img src={session?.user?.image || "https://i.pravatar.cc/150?img=68"} alt="Admin" className="w-full h-full object-cover" />
+              </div>
+
+              {isProfileMenuOpen && (
+                <div className="absolute right-0 mt-4 w-48 bg-white border-2 border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)] rounded-xl overflow-hidden z-50 flex flex-col pointer-events-auto">
+                  <div className="p-4 border-b-2 border-black bg-slate-50">
+                    <p className="text-sm font-bold text-slate-900">{session?.user?.name || "Admin User"}</p>
+                    <p className="text-xs text-slate-500 font-medium mt-1 truncate">{session?.user?.email || "admin@belvo.com"}</p>
+                  </div>
+                  <button className="text-left px-4 py-3 text-sm font-bold text-slate-700 hover:bg-[#8A2BE2] hover:text-white transition-colors border-b-2 border-slate-100">
+                    Settings
+                  </button>
+                  <button 
+                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    className="text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-500 hover:text-white transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

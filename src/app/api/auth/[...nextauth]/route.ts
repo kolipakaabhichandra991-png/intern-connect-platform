@@ -9,13 +9,12 @@ export const authOptions: AuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        role: { label: "Role", type: "text" }
+        role: { label: "Role", type: "text" },
+        otp: { label: "OTP", type: "text" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password || !credentials?.otp) return null;
         
-        // For this prototype, we're doing a simple string match
-        // In production, ALWAYS use bcrypt to hash and compare passwords
         const user = await prisma.user.findFirst({
           where: { 
             email: {
@@ -27,6 +26,20 @@ export const authOptions: AuthOptions = {
         });
 
         if (user && user.passwordHash === credentials.password) {
+          // Verify OTP
+          if (user.otpCode !== credentials.otp) {
+            throw new Error("Invalid OTP");
+          }
+          if (!user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+            throw new Error("OTP expired");
+          }
+
+          // Clear OTP after successful login
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { otpCode: null, otpExpiresAt: null }
+          });
+
           return {
             id: user.id,
             email: user.email,

@@ -57,3 +57,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || (session.user as any).role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const logs = await prisma.dailyReport.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        intern: {
+          select: {
+            id: true,
+            name: true,
+            photoUrl: true
+          }
+        }
+      }
+    });
+
+    return NextResponse.json(logs, { status: 200 });
+  } catch (error) {
+    console.error("Failed to fetch logs", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}

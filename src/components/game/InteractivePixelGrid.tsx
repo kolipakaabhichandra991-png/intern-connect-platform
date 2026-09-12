@@ -90,7 +90,7 @@ export default function InteractivePixelGrid() {
   return (
     <canvas 
       ref={canvasRef} 
-      className="absolute inset-0 w-full h-full pointer-events-none opacity-60"
+      className="fixed inset-0 w-full h-full pointer-events-none opacity-60 z-0"
     />
   );
 }
