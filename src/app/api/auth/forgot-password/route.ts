@@ -29,13 +29,13 @@ export async function POST(req: Request) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD
       }
     });
 
     await transporter.sendMail({
-      from: process.env.SMTP_USER,
+      from: process.env.SMTP_EMAIL,
       to: email,
       subject: 'Belvo - Password Reset Verification',
       html: `
