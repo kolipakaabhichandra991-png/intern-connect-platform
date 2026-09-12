@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       }
     });
     if (existing) {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 });
+      return NextResponse.json({ error: `User already exists with this email as an ${existing.role}` }, { status: 400 });
     }
 
     // Create User (In production, hash password!)
