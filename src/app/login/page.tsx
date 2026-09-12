@@ -73,6 +73,25 @@ function LoginContent() {
   return (
     <main className="min-h-screen bg-[#e0e5ec] flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-white border-2 border-black rounded-2xl p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)] relative">
+        
+        {/* Role Switcher */}
+        <div className="flex gap-2 mb-6 border-b-2 border-slate-100 pb-6">
+          <Link 
+            href="/login?role=intern" 
+            onClick={() => { setStep(1); setOtp(""); setEmail(""); setPassword(""); }}
+            className={`flex-1 text-center py-2 text-xs font-bold uppercase tracking-widest border-2 border-black rounded-xl transition-all ${!isAdmin ? 'bg-[#00f2fe] text-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]' : 'bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+          >
+            Intern
+          </Link>
+          <Link 
+            href="/login?role=admin" 
+            onClick={() => { setStep(1); setOtp(""); setEmail(""); setPassword(""); }}
+            className={`flex-1 text-center py-2 text-xs font-bold uppercase tracking-widest border-2 border-black rounded-xl transition-all ${isAdmin ? 'bg-[#8A2BE2] text-white shadow-[2px_2px_0_0_rgba(0,0,0,1)]' : 'bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
+          >
+            Admin
+          </Link>
+        </div>
+
         <h1 className="text-3xl font-bold mb-2 text-slate-900">{isAdmin ? "Admin Login" : "Intern Login"}</h1>
         <p className="text-slate-500 mb-8">
           {step === 1 ? "Sign in to your Belvo workspace." : "Enter the verification code sent to your email."}
