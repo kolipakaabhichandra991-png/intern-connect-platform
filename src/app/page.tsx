@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -124,7 +124,7 @@ export default function HomePage() {
             <motion.div 
               key={i}
               whileHover={{ y: -10 }}
-              className={\\ \ border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] p-8 flex flex-col items-center text-center\}
+              className={`${feature.color} ${feature.textColor} border-4 border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] p-8 flex flex-col items-center text-center`}
             >
               <div className="bg-white text-black p-4 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] mb-6 rotate-3">
                 <feature.icon className="w-10 h-10" />
