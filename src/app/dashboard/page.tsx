@@ -117,8 +117,8 @@ function ThreeScene() {
 }
 
 // UI OVERLAY COMPONENT
-export default function Dashboard() {
-  const { data: session } = useSession();
+export default function AdminDashboard() {
+  const { data: session, status } = useSession();
   const [filter, setFilter] = useState('all');
   const [isScanning, setIsScanning] = useState(false);
   const [interns, setInterns] = useState<any[]>([]);
@@ -126,6 +126,8 @@ export default function Dashboard() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   useEffect(() => {
+    if (status === "unauthenticated") return;
+    
     fetch('/api/interns')
       .then(res => res.json())
       .then(data => {
@@ -142,7 +144,26 @@ export default function Dashboard() {
         setInterns([]);
         setIsLoading(false);
       });
-  }, []);
+  }, [status]);
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-[#e0e5ec] flex flex-col gap-6 items-center justify-center p-6 text-center">
+        <h1 className="text-3xl font-bold text-slate-900 mb-4 font-serif">"Leadership is the capacity to translate vision into reality."</h1>
+        <p className="text-slate-500 font-bold uppercase tracking-widest mb-8">- Warren Bennis</p>
+        <Link 
+          href="/login" 
+          className="px-8 py-3 bg-[#8A2BE2] text-white font-bold tracking-widest uppercase rounded-xl text-sm border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all"
+        >
+          Sign In Again
+        </Link>
+      </div>
+    );
+  }
+
+  if (status === "loading" || isLoading) {
+    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center font-bold text-xl">Loading...</div>;
+  }
 
   // Filter interns
   const filteredInterns = interns.filter(i => {

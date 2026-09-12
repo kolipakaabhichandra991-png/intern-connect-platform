@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 
 export default function ResourceHub() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const isAdmin = session?.user && (session.user as any).role === 'ADMIN';
 
   const [resources, setResources] = useState<any[]>([]);
@@ -16,10 +16,12 @@ export default function ResourceHub() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (status === "unauthenticated") return;
+
     fetch('/api/resources').then(res => res.json()).then(data => {
       if (!data.error) setResources(data);
     });
-  }, []);
+  }, [status]);
 
   const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +48,25 @@ export default function ResourceHub() {
       setIsSubmitting(false);
     }
   };
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-[#e0e5ec] flex flex-col gap-6 items-center justify-center p-6 text-center">
+        <h1 className="text-3xl font-bold text-slate-900 mb-4 font-serif">"An investment in knowledge pays the best interest."</h1>
+        <p className="text-slate-500 font-bold uppercase tracking-widest mb-8">- Benjamin Franklin</p>
+        <Link 
+          href="/login" 
+          className="px-8 py-3 bg-[#00f2fe] text-slate-900 font-bold tracking-widest uppercase rounded-xl text-sm border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all"
+        >
+          Sign In Again
+        </Link>
+      </div>
+    );
+  }
+
+  if (status === "loading") {
+    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center font-bold text-xl">Loading...</div>;
+  }
 
   return (
     <main className="min-h-screen bg-[#e0e5ec] p-6 md:p-10 font-sans">

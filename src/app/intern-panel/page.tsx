@@ -20,7 +20,7 @@ const logSchema = z.object({
 type LogFormValues = z.infer<typeof logSchema>;
 
 export default function InternPanelPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -40,6 +40,8 @@ export default function InternPanelPage() {
   });
 
   useEffect(() => {
+    if (status === "unauthenticated") return;
+    
     Promise.all([
       fetch('/api/interns/me').then(res => res.json()),
       fetch('/api/interns').then(res => res.json())
@@ -66,7 +68,7 @@ export default function InternPanelPage() {
       toast.error("Network error");
       setIsLoading(false);
     });
-  }, []);
+  }, [status]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,13 +128,28 @@ export default function InternPanelPage() {
     }
   };
 
-  if (isLoading) {
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-[#e0e5ec] flex flex-col gap-6 items-center justify-center p-6 text-center">
+        <h1 className="text-3xl font-bold text-slate-900 mb-4 font-serif">"The only way to do great work is to love what you do."</h1>
+        <p className="text-slate-500 font-bold uppercase tracking-widest mb-8">- Steve Jobs</p>
+        <Link 
+          href="/login" 
+          className="px-8 py-3 bg-[#00f2fe] text-slate-900 font-bold tracking-widest uppercase rounded-xl text-sm border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all"
+        >
+          Sign In Again
+        </Link>
+      </div>
+    );
+  }
+
+  if (status === "loading" || isLoading) {
     return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center font-bold text-xl">Loading Dashboard...</div>;
   }
 
   if (!intern) {
     return (
-      <div className="min-h-screen bg-[#e0e5ec] flex flex-col gap-6 items-center justify-center font-bold text-xl text-slate-900">
+      <div className="min-h-screen bg-[#e0e5ec] flex flex-col gap-6 items-center justify-center font-bold text-xl text-slate-900 p-6 text-center">
         <div>Error loading profile or unauthorized.</div>
         <button 
           onClick={() => signOut({ callbackUrl: '/login' })} 

@@ -5,7 +5,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 export default function ReportsPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [reports, setReports] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedInternId, setExpandedInternId] = useState<string | null>(null);
@@ -14,6 +14,8 @@ export default function ReportsPage() {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   useEffect(() => {
+    if (status === "unauthenticated") return;
+    
     fetch('/api/logs')
       .then(res => res.json())
       .then(data => {
@@ -26,7 +28,7 @@ export default function ReportsPage() {
         console.error(err);
         setIsLoading(false);
       });
-  }, []);
+  }, [status]);
 
   const generateAISummary = async () => {
     setIsGeneratingSummary(true);
@@ -51,8 +53,23 @@ export default function ReportsPage() {
     console.log("Feedback provided:", feedback);
   };
 
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center font-bold">Loading...</div>;
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-[#e0e5ec] flex flex-col gap-6 items-center justify-center p-6 text-center">
+        <h1 className="text-3xl font-bold text-slate-900 mb-4 font-serif">"Feedback is the breakfast of champions."</h1>
+        <p className="text-slate-500 font-bold uppercase tracking-widest mb-8">- Ken Blanchard</p>
+        <Link 
+          href="/login" 
+          className="px-8 py-3 bg-[#8A2BE2] text-white font-bold tracking-widest uppercase rounded-xl text-sm border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all"
+        >
+          Sign In Again
+        </Link>
+      </div>
+    );
+  }
+
+  if (status === "loading" || isLoading) {
+    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center font-bold">Loading...</div>;
   }
 
   const groupedReportsArray = Object.values(
