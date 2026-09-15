@@ -227,7 +227,7 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="py-32 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-20">
-          <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter border-b-8 border-black inline-block pb-4">
+          <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter border-b-8 border-black inline-block pb-4 text-black">
             Supercharged Features
           </h2>
         </div>
@@ -274,18 +274,18 @@ export default function HomePage() {
       {/* FAQ Section */}
       <section className="py-24 px-6 max-w-4xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter border-b-8 border-black inline-block pb-4">
+          <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter border-b-8 border-black inline-block pb-4 text-black">
             FAQs
           </h2>
         </div>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 text-black">
           {[
             { q: "What is the Intern Connect Platform?", a: "It is an internal tool to help interns log their daily progress, access resources, and stay connected with their team." },
             { q: "How do I get my login credentials?", a: "Your login credentials will be provided by your mentor or the HR team on your first day." },
             { q: "What should I put in my daily logs?", a: "Keep it brief but informative! Mention what you worked on, what you learned, and any blockers you faced." },
             { q: "How does the Gamification work?", a: "You earn XP for submitting logs on time. You can also give and receive 'Kudos' from teammates for a job well done!" },
           ].map((faq, i) => (
-            <details key={i} className="group bg-white border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] open:bg-[#ffdb00] transition-colors cursor-pointer">
+            <details key={i} className="group bg-white border-4 border-black p-6 shadow-[8px_8px_0_0_rgba(0,0,0,1)] open:bg-[#ffdb00] transition-colors cursor-pointer text-black">
               <summary className="text-2xl font-black uppercase flex justify-between items-center outline-none list-none">
                 {faq.q}
                 <span className="text-4xl group-open:rotate-45 transition-transform">+</span>
