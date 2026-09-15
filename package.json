@@ -29,7 +29,8 @@
     "recharts": "^3.10.1",
     "sonner": "^2.0.8",
     "three": "^0.185.1",
-    "zod": "^4.5.4"
+    "xss": "^1.0.15",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

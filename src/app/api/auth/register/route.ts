@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { RegisterSchema } from "@/lib/validation";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role, department, photoUrl } = await req.json();
-
-    if (!email || !password || !name) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    const rawBody = await req.json();
+    const validation = RegisterSchema.safeParse(rawBody);
+    
+    if (!validation.success) {
+      console.error("Signup Validation Failed:", validation.error.format());
+      return NextResponse.json({ error: "Invalid input provided. Please check your details." }, { status: 400 });
     }
+
+    const { name, email, password, role, department, photoUrl } = validation.data;
 
     // Check if user exists (case-insensitive)
     const existing = await prisma.user.findFirst({

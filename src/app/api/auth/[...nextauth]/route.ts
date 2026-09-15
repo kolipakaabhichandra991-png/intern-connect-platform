@@ -1,6 +1,7 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
+import { LoginSchema } from "@/lib/validation";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -12,8 +13,19 @@ export const authOptions: AuthOptions = {
         role: { label: "Role", type: "text" },
         otp: { label: "OTP", type: "text" }
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password || !credentials?.otp) return null;
+      async authorize(rawCredentials) {
+        if (!rawCredentials) return null;
+
+        const validation = LoginSchema.safeParse(rawCredentials);
+        if (!validation.success) {
+          console.error("Login Validation Failed:", validation.error.format());
+          throw new Error("Invalid input provided. Please check your credentials.");
+        }
+
+        const credentials = validation.data;
+        if (!credentials.email || !credentials.password || !credentials.otp) {
+           throw new Error("Invalid input provided. Please check your credentials.");
+        }
         
         const user = await prisma.user.findFirst({
           where: { 
