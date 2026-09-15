@@ -21,8 +21,18 @@ export async function POST(req: Request) {
       }
     });
 
-    if (!user || user.passwordHash !== password) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    let isPasswordValid = false;
+    if (user) {
+      const { isHashed, verifyPassword } = await import("@/lib/hash");
+      if (isHashed(user.passwordHash)) {
+        isPasswordValid = await verifyPassword(password, user.passwordHash);
+      } else {
+        isPasswordValid = user.passwordHash === password;
+      }
+    }
+
+    if (!user || !isPasswordValid) {
+      return NextResponse.json({ error: 'Incorrect email or password' }, { status: 401 });
     }
 
     // Generate 6 digit OTP

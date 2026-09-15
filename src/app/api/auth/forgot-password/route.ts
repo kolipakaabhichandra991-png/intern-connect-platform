@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
     if (!user) {
       // Return success even if user not found for security reasons
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, message: "If that email is registered, you'll receive a reset link" });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       `
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: "If that email is registered, you'll receive a reset link" });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });

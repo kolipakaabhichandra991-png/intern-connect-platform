@@ -12,16 +12,8 @@ export async function POST(req: Request) {
       where: { email: { equals: email, mode: 'insensitive' }, role }
     });
 
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid details' }, { status: 400 });
-    }
-
-    if (user.otpCode !== otp) {
-      return NextResponse.json({ error: 'Invalid OTP' }, { status: 400 });
-    }
-
-    if (!user.otpExpiresAt || user.otpExpiresAt < new Date()) {
-      return NextResponse.json({ error: 'OTP expired' }, { status: 400 });
+    if (!user || user.otpCode !== otp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+      return NextResponse.json({ error: 'Invalid or expired password reset token.' }, { status: 400 });
     }
 
     const { hashPassword } = await import("@/lib/hash");

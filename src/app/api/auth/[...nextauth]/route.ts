@@ -166,7 +166,7 @@ export const authOptions: AuthOptions = {
           };
         } catch (error: any) {
           if (error.message === "GenericAuthError") {
-             throw new Error("Invalid login attempt. Please try again later.");
+             throw new Error("Incorrect email or password");
           }
           throw error;
         }

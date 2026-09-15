@@ -25,7 +25,8 @@ export async function POST(req: Request) {
       }
     });
     if (existing) {
-      return NextResponse.json({ error: `User already exists with this email as an ${existing.role}` }, { status: 400 });
+      // Fake success to prevent email enumeration
+      return NextResponse.json({ success: true, message: "If the information provided is valid, your account has been created." }, { status: 201 });
     }
 
     // Create User (with bcrypt hashing)
