@@ -3,7 +3,7 @@ import { useState, use, useEffect } from "react";
 import QRCodeGenerator from "@/components/qrcode/QRCodeGenerator";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, notFound } from "next/navigation";
 
 export default function ScannedProfilePage({ params }: { params: Promise<{ internId: string }> }) {
   const { data: session } = useSession();
@@ -58,7 +58,7 @@ export default function ScannedProfilePage({ params }: { params: Promise<{ inter
   }
 
   if (!intern) {
-    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center text-xl font-bold">Intern not found.</div>;
+    notFound();
   }
 
   // Fallbacks for now since some fields don't exist in Prisma yet
