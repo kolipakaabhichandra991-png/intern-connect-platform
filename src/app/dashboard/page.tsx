@@ -4,7 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sparkles, Float, MeshTransmissionMaterial, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import Link from 'next/link';
-import { signOut, useSession } from 'next-auth/react';
+import { signOut, useSession } from '@/lib/supabase/useSession';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import InteractivePixelGrid from '@/components/game/InteractivePixelGrid';
 import QRScanner from '@/components/qrcode/QRScanner';
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
                     Settings
                   </button>
                   <button 
-                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    onClick={() => signOut()}
                     className="text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-500 hover:text-white transition-colors"
                   >
                     Sign Out

@@ -9,14 +9,10 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
+  id            String   @id // Now maps directly to Supabase auth.users UUID
   email         String   @unique
-  passwordHash  String
   role          String   @default("INTERN")
   
-  otpCode       String?
-  otpExpiresAt  DateTime?
-
   xp            Int      @default(0) // Gamification points
 
   createdAt     DateTime @default(now())

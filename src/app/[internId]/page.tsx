@@ -1,7 +1,7 @@
 "use client";
 import { useState, use, useEffect } from "react";
 import QRCodeGenerator from "@/components/qrcode/QRCodeGenerator";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/supabase/useSession";
 import { toast } from "sonner";
 import { useRouter, notFound } from "next/navigation";
 

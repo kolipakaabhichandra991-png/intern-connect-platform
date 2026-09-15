@@ -9,7 +9,7 @@ export async function GET() {
       update: {},
       create: {
         email: "admin@belvo.com",
-        passwordHash: "password", // DO NOT USE IN PRODUCTION
+        
         role: "ADMIN"
       }
     });
@@ -20,7 +20,7 @@ export async function GET() {
       update: {},
       create: {
         email: "intern@belvo.com",
-        passwordHash: "password", // DO NOT USE IN PRODUCTION
+        
         role: "INTERN"
       }
     });
@@ -56,7 +56,7 @@ export async function GET() {
       update: {},
       create: {
         email: "sarah@belvo.com",
-        passwordHash: "password",
+        
         role: "INTERN"
       }
     });

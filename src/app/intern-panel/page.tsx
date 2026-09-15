@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { useSession, signOut } from "next-auth/react";
+import { signOut, useSession } from "@/lib/supabase/useSession";
 import InteractivePixelGrid from '@/components/game/InteractivePixelGrid';
 import KudosWidget from '@/components/KudosWidget';
 
@@ -152,7 +152,7 @@ export default function InternPanelPage() {
       <div className="min-h-screen bg-[#e0e5ec] flex flex-col gap-6 items-center justify-center font-bold text-xl text-slate-900 p-6 text-center">
         <div>Error loading profile or unauthorized.</div>
         <button 
-          onClick={() => signOut({ callbackUrl: '/login' })} 
+          onClick={() => signOut()} 
           className="px-6 py-2 bg-slate-900 text-white font-bold tracking-widest uppercase rounded-xl text-sm border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-1 transition-all"
         >
           Sign Out
@@ -227,7 +227,7 @@ export default function InternPanelPage() {
                     Settings
                   </button>
                   <button 
-                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    onClick={() => signOut()}
                     className="text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-500 hover:text-white transition-colors"
                   >
                     Sign Out

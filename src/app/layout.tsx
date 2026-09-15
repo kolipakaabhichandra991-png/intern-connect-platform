@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import AuthProvider from "@/components/providers/SessionProvider";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -20,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-full flex flex-col" style={{ fontFamily: "'VT323', monospace" }}>
-        <AuthProvider>{children}</AuthProvider>
+        {children}
         <Toaster position="top-right" richColors theme="light" />
       </body>
     </html>

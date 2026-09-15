@@ -1,356 +1,130 @@
 "use client";
-
-import React, { useState, Suspense } from 'react';
-import { signIn, getSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { createClient } from '@/lib/supabase/client';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const role = searchParams.get('role') || 'intern'; // default to intern
-  const isAdmin = role === 'admin';
+  const isAdmin = searchParams.get('admin') === 'true';
+  const supabase = createClient();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState(1);
-  const [mode, setMode] = useState<"login" | "forgot">("login");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendOTP = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role: isAdmin ? "ADMIN" : "INTERN" })
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
 
-      if (res.ok) {
-        toast.success("OTP sent to your email!");
-        setStep(2);
+      if (error) {
+        toast.error("Incorrect email or password");
       } else {
-        const data = await res.json();
-        toast.error(data.error || "Invalid credentials");
+        toast.success("Successfully logged in!");
+        router.push(isAdmin ? '/intern-panel' : '/dashboard');
+        router.refresh();
       }
-    } catch (error) {
+    } catch (err: any) {
       toast.error("An error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    const res = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-      role: isAdmin ? "ADMIN" : "INTERN",
-      otp
+  const handleOAuth = async (provider: 'google' | 'github') => {
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${location.origin}/api/auth/callback`
+      }
     });
-
-    if (res?.error) {
-      toast.error(res.error || "Invalid OTP");
-      setIsLoading(false);
-    } else {
-      toast.success("Successfully logged in!");
-      const session = await getSession();
-      setIsLoading(false);
-      
-      if (session?.user && (session.user as any).role === "ADMIN") {
-        router.push("/dashboard");
-      } else {
-        router.push("/intern-panel");
-      }
-    }
-  };
-
-  const handleForgotSendOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const res = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role: isAdmin ? "ADMIN" : "INTERN" })
-      });
-
-      if (res.ok) {
-        toast.success("Password reset code sent to your email!");
-        setStep(2);
-      } else {
-        const data = await res.json();
-        toast.error(data.error || "An error occurred");
-      }
-    } catch (error) {
-      toast.error("An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleForgotVerifyAndReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role: isAdmin ? "ADMIN" : "INTERN", otp, newPassword })
-      });
-
-      if (res.ok) {
-        toast.success("Password reset successfully! Please login with your new password.");
-        setMode("login");
-        setStep(1);
-        setPassword("");
-        setOtp("");
-        setNewPassword("");
-      } else {
-        const data = await res.json();
-        toast.error(data.error || "Invalid details or OTP expired");
-      }
-    } catch (error) {
-      toast.error("An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetState = () => {
-    setStep(1); setOtp(""); setEmail(""); setPassword(""); setNewPassword(""); setMode("login");
   };
 
   return (
-    <main className="min-h-screen bg-[#e0e5ec] flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white border-2 border-black rounded-2xl p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)] relative">
-        
-        {/* Role Switcher */}
-        <div className="flex gap-2 mb-6 border-b-2 border-slate-100 pb-6">
-          <Link 
-            href="/login?role=intern" 
-            onClick={resetState}
-            className={`flex-1 text-center py-2 text-xs font-bold uppercase tracking-widest border-2 border-black rounded-xl transition-all ${!isAdmin ? 'bg-[#00f2fe] text-slate-900 shadow-[2px_2px_0_0_rgba(0,0,0,1)]' : 'bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
-          >
-            Intern
-          </Link>
-          <Link 
-            href="/login?role=admin" 
-            onClick={resetState}
-            className={`flex-1 text-center py-2 text-xs font-bold uppercase tracking-widest border-2 border-black rounded-xl transition-all ${isAdmin ? 'bg-[#8A2BE2] text-white shadow-[2px_2px_0_0_rgba(0,0,0,1)]' : 'bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}
-          >
-            Admin
-          </Link>
+    <main className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-500 ${isAdmin ? 'bg-[#f0e6fa]' : 'bg-[#e0e5ec]'}`}>
+      <div className={`absolute top-0 left-0 w-full h-2 ${isAdmin ? 'bg-gradient-to-r from-[#8A2BE2] to-[#c299eb]' : 'bg-gradient-to-r from-[#00f2fe] to-[#4facfe]'}`} />
+      
+      <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)] border-4 border-black">
+        <div className="mb-8 text-center relative">
+          <div className="inline-block relative">
+            <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900">
+              {isAdmin ? "Admin Access" : "Belvo Login"}
+            </h1>
+          </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-2 text-slate-900">
-          {mode === "forgot" ? "Reset Password" : (isAdmin ? "Admin Login" : "Intern Login")}
-        </h1>
-        <p className="text-slate-500 mb-8 text-sm">
-          {mode === "forgot" 
-            ? (step === 1 ? "Enter your email to receive a password reset code." : "Enter the verification code and your new password.")
-            : (step === 1 ? "Sign in to your Belvo workspace." : "Enter the verification code sent to your email.")
-          }
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold uppercase tracking-widest mb-1 text-slate-900">Email</label>
+            <input 
+              type="email" 
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className={`w-full border-2 border-black rounded-xl p-3 focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder-slate-400 ${isAdmin ? 'focus:border-[#8A2BE2]' : 'focus:border-[#00f2fe]'}`}
+              placeholder={isAdmin ? "admin@belvo.com" : "intern@belvo.com"}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold uppercase tracking-widest mb-1 text-slate-900">Password</label>
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className={`w-full border-2 border-black rounded-xl p-3 pr-12 focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder-slate-400 ${isAdmin ? 'focus:border-[#8A2BE2]' : 'focus:border-[#00f2fe]'}`}
+                placeholder="��������"
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 font-bold text-xs uppercase tracking-widest"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
+          
+          <button 
+            disabled={isLoading}
+            className={`w-full text-white font-bold py-3 rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all disabled:opacity-50 mt-4 ${
+              isAdmin 
+                ? 'bg-[#8A2BE2] hover:bg-[#7a20c9] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]' 
+                : 'bg-[#00f2fe] text-slate-900 hover:bg-[#00d2dd] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]'
+            }`}
+          >
+            {isLoading ? "Checking..." : "Continue"}
+          </button>
+        </form>
+
+        <div className="mt-6 flex flex-col gap-2">
+           <button 
+             onClick={() => handleOAuth('google')}
+             className="w-full font-bold py-3 rounded-xl border-2 border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-2 bg-white text-black"
+           >
+             Continue with Google
+           </button>
+           <button 
+             onClick={() => handleOAuth('github')}
+             className="w-full font-bold py-3 rounded-xl border-2 border-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-2 bg-black text-white"
+           >
+             Continue with GitHub
+           </button>
+        </div>
+
+        <p className="mt-6 text-center text-sm font-medium">
+          Don't have an account? <Link href="/register" className="text-[#00f2fe] hover:underline">Sign up</Link>
         </p>
-
-        {mode === "login" ? (
-          step === 1 ? (
-            <form onSubmit={handleSendOTP} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-widest mb-1 text-slate-900">Email</label>
-                <input 
-                  type="email" 
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className={`w-full border-2 border-black rounded-xl p-3 focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder-slate-400 ${isAdmin ? 'focus:border-[#8A2BE2]' : 'focus:border-[#00f2fe]'}`}
-                  placeholder={isAdmin ? "admin@belvo.com" : "intern@belvo.com"}
-                />
-              </div>
-              <div>
-                <div className="flex justify-between items-end mb-1">
-                  <label className="block text-sm font-bold uppercase tracking-widest text-slate-900">Password</label>
-                </div>
-                <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    required
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    className={`w-full border-2 border-black rounded-xl p-3 pr-12 focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder-slate-400 ${isAdmin ? 'focus:border-[#8A2BE2]' : 'focus:border-[#00f2fe]'}`}
-                    placeholder="••••••••"
-                  />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 font-bold text-xs uppercase tracking-widest"
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex justify-end pt-1">
-                <button 
-                  type="button"
-                  onClick={() => { setMode("forgot"); setStep(1); }}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-
-              <button 
-                disabled={isLoading}
-                className={`w-full text-white font-bold py-3 rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all disabled:opacity-50 mt-4 ${
-                  isAdmin 
-                    ? 'bg-[#8A2BE2] hover:bg-[#7a20c9] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]' 
-                    : 'bg-[#00f2fe] text-slate-900 hover:bg-[#00d2dd] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]'
-                }`}
-              >
-                {isLoading ? "Checking..." : "Continue"}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOTP} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-widest mb-1 text-slate-900">Verification Code</label>
-                <input 
-                  type="text" 
-                  required
-                  value={otp}
-                  onChange={e => setOtp(e.target.value)}
-                  className={`w-full border-2 border-black rounded-xl p-3 focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder-slate-400 text-center tracking-[1em] font-mono text-xl ${isAdmin ? 'focus:border-[#8A2BE2]' : 'focus:border-[#00f2fe]'}`}
-                  placeholder="000000"
-                  maxLength={6}
-                />
-              </div>
-              <button 
-                disabled={isLoading}
-                className={`w-full text-white font-bold py-3 rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all disabled:opacity-50 mt-4 ${
-                  isAdmin 
-                    ? 'bg-[#8A2BE2] hover:bg-[#7a20c9] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]' 
-                    : 'bg-[#00f2fe] text-slate-900 hover:bg-[#00d2dd] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]'
-                }`}
-              >
-                {isLoading ? "Verifying..." : "Verify & Login"}
-              </button>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => setStep(1)}
-                className="w-full text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors mt-2"
-              >
-                Back
-              </button>
-            </form>
-          )
-        ) : (
-          step === 1 ? (
-            <form onSubmit={handleForgotSendOTP} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-widest mb-1 text-slate-900">Email</label>
-                <input 
-                  type="email" 
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className={`w-full border-2 border-black rounded-xl p-3 focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder-slate-400 ${isAdmin ? 'focus:border-[#8A2BE2]' : 'focus:border-[#00f2fe]'}`}
-                  placeholder={isAdmin ? "admin@belvo.com" : "intern@belvo.com"}
-                />
-              </div>
-              <button 
-                disabled={isLoading}
-                className={`w-full text-white font-bold py-3 rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all disabled:opacity-50 mt-4 ${
-                  isAdmin 
-                    ? 'bg-[#8A2BE2] hover:bg-[#7a20c9] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]' 
-                    : 'bg-[#00f2fe] text-slate-900 hover:bg-[#00d2dd] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]'
-                }`}
-              >
-                {isLoading ? "Sending..." : "Send Reset Code"}
-              </button>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => setMode("login")}
-                className="w-full text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors mt-2"
-              >
-                Back to Login
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleForgotVerifyAndReset} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-widest mb-1 text-slate-900">Verification Code</label>
-                <input 
-                  type="text" 
-                  required
-                  value={otp}
-                  onChange={e => setOtp(e.target.value)}
-                  className={`w-full border-2 border-black rounded-xl p-3 focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder-slate-400 text-center tracking-[1em] font-mono text-xl ${isAdmin ? 'focus:border-[#8A2BE2]' : 'focus:border-[#00f2fe]'}`}
-                  placeholder="000000"
-                  maxLength={6}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold uppercase tracking-widest mb-1 text-slate-900">New Password</label>
-                <div className="relative">
-                  <input 
-                    type={showNewPassword ? "text" : "password"} 
-                    required
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    className={`w-full border-2 border-black rounded-xl p-3 pr-12 focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder-slate-400 ${isAdmin ? 'focus:border-[#8A2BE2]' : 'focus:border-[#00f2fe]'}`}
-                    placeholder="••••••••"
-                  />
-                  <button 
-                    type="button" 
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 font-bold text-xs uppercase tracking-widest"
-                  >
-                    {showNewPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-              <button 
-                disabled={isLoading}
-                className={`w-full text-white font-bold py-3 rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all disabled:opacity-50 mt-4 ${
-                  isAdmin 
-                    ? 'bg-[#8A2BE2] hover:bg-[#7a20c9] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]' 
-                    : 'bg-[#00f2fe] text-slate-900 hover:bg-[#00d2dd] hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)]'
-                }`}
-              >
-                {isLoading ? "Resetting..." : "Reset Password"}
-              </button>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={() => setStep(1)}
-                className="w-full text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors mt-2"
-              >
-                Back
-              </button>
-            </form>
-          )
-        )}
-
-        {isAdmin && (
-          <p className="mt-6 text-center text-sm font-medium">
-            Don't have an admin account? <Link href="/register" className="text-[#8A2BE2] hover:underline">Sign up</Link>
-          </p>
-        )}
       </div>
     </main>
   );

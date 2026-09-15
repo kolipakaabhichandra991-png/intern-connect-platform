@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
 
 const logSchema = z.object({
   reportOfDay: z.string().min(10, "Report must be at least 10 characters"),
@@ -12,7 +12,7 @@ const logSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session || !session.user || (session.user as any).role !== "INTERN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession();
     if (!session || !session.user || (session.user as any).role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

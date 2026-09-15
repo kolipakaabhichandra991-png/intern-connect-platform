@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { signOut, useSession } from 'next-auth/react';
+import { signOut, useSession } from '@/lib/supabase/useSession';
 import { toast } from 'sonner';
 
 export default function ReportsPage() {
@@ -138,7 +138,7 @@ export default function ReportsPage() {
                     Settings
                   </button>
                   <button 
-                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    onClick={() => signOut()}
                     className="text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-500 hover:text-white transition-colors"
                   >
                     Sign Out
