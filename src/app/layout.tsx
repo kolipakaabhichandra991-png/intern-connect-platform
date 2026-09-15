@@ -4,8 +4,11 @@ import AuthProvider from "@/components/providers/SessionProvider";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Internkonnect Dashboard",
-  description: "Belvo Internal Dashboard",
+  title: {
+    template: '%s | Belvo',
+    default: 'Belvo | Intern Connect Platform',
+  },
+  description: 'Elevate your career with AI-driven insights, gamified progress, and seamless team collaboration.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
