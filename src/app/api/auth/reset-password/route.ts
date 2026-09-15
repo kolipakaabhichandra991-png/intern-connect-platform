@@ -24,10 +24,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'OTP expired' }, { status: 400 });
     }
 
+    const { hashPassword } = await import("@/lib/hash");
+    const hashedPassword = await hashPassword(newPassword);
+
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        passwordHash: newPassword, // Note: Should be hashed with bcrypt in prod
+        passwordHash: hashedPassword,
         otpCode: null,
         otpExpiresAt: null
       }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { RegisterSchema } from "@/lib/validation";
+import { hashPassword } from "@/lib/hash";
 
 export async function POST(req: Request) {
   try {
@@ -27,11 +28,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `User already exists with this email as an ${existing.role}` }, { status: 400 });
     }
 
-    // Create User (In production, hash password!)
+    // Create User (with bcrypt hashing)
+    const hashedPassword = await hashPassword(password);
     const user = await prisma.user.create({
       data: {
         email,
-        passwordHash: password, // TODO: bcrypt
+        passwordHash: hashedPassword,
         role: role || "INTERN"
       }
     });

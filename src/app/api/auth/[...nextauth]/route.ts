@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
 import { LoginSchema } from "@/lib/validation";
 import { accountLockoutCache, sendLockoutEmail } from "@/lib/authRateLimit";
+import { isHashed, verifyPassword, hashPassword } from "@/lib/hash";
 
 // In-memory cache for IP Rate Limiting (10 requests per minute)
 const ipRateLimitCache = new Map<string, { count: number, windowStart: number }>();
@@ -122,7 +123,25 @@ export const authOptions: AuthOptions = {
             }
           });
 
-          if (!user || user.passwordHash !== credentials.password) {
+          let isPasswordValid = false;
+          if (user) {
+            if (isHashed(user.passwordHash)) {
+              isPasswordValid = await verifyPassword(credentials.password, user.passwordHash);
+            } else {
+              // Legacy plain-text comparison (MIGRATION PATH)
+              isPasswordValid = user.passwordHash === credentials.password;
+              if (isPasswordValid) {
+                // Instantly re-hash and upgrade the user's password in the database
+                const newHash = await hashPassword(credentials.password);
+                await prisma.user.update({
+                  where: { id: user.id },
+                  data: { passwordHash: newHash }
+                });
+              }
+            }
+          }
+
+          if (!user || !isPasswordValid) {
             await handleFailedAttempt(credentials.email);
           }
 
