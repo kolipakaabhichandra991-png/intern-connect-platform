@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -16,11 +16,11 @@ export default function RatingComponent({ internId, reviewType }: RatingProps) {
     if (selectedStar === 0) return alert("Please select a rating.");
     
     // Normally we'd POST to /api/reviews here
-    // await fetch("/api/reviews", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ internId, type: reviewType, rating: selectedStar, comments: data.comments }),
-    // });
+    await fetch("/api/reviews", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ internId, type: reviewType, rating: selectedStar, comments: data.comments }),
+    });
     reset();
     setSelectedStar(0);
     alert("Review submitted successfully!");
@@ -41,9 +41,7 @@ export default function RatingComponent({ internId, reviewType }: RatingProps) {
             onMouseLeave={() => setHoveredStar(0)}
             onClick={() => setSelectedStar(star)}
           >
-            <span className={star <= (hoveredStar || selectedStar) ? "text-yellow-400" : "text-gray-200"}>
-              ★
-            </span>
+            <span className={star <= (hoveredStar || selectedStar) ? "text-yellow-400" : "text-gray-200"}>&#9733;</span>
           </button>
         ))}
       </div>
@@ -60,3 +58,5 @@ export default function RatingComponent({ internId, reviewType }: RatingProps) {
     </form>
   );
 }
+
+

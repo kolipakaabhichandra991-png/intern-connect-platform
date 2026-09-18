@@ -5,9 +5,9 @@ import { z } from "zod";
 
 
 const logSchema = z.object({
-  reportOfDay: z.string().min(10, "Report must be at least 10 characters"),
-  learningOfDay: z.string().min(10, "Learning must be at least 10 characters"),
-  meetingOfDay: z.string().min(5, "Meeting description must be at least 5 characters"),
+  reportOfDay: z.string().min(1, "Report must be at least 1 character"),
+  learningOfDay: z.string().min(1, "Learning must be at least 1 character"),
+  meetingOfDay: z.string().min(1, "Meeting must be at least 1 character"),
 });
 
 export async function POST(req: Request) {
@@ -84,3 +84,4 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+

@@ -1,23 +1,17 @@
-"use client";
+﻿"use client";
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sparkles, Float, MeshTransmissionMaterial, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import Link from 'next/link';
 import { signOut, useSession } from '@/lib/supabase/useSession';
+import { useRouter } from 'next/navigation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 import InteractivePixelGrid from '@/components/game/InteractivePixelGrid';
 import QRScanner from '@/components/qrcode/QRScanner';
 
-const weeklyChartData = [
-  { day: 'M', logs: 40 },
-  { day: 'T', logs: 70 },
-  { day: 'W', logs: 45 },
-  { day: 'T', logs: 90 },
-  { day: 'F', logs: 60 },
-  { day: 'S', logs: 100 },
-  { day: 'S', logs: 30 },
-];
+
 
 
 
@@ -119,11 +113,22 @@ function ThreeScene() {
 // UI OVERLAY COMPONENT
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
+
+  const router = useRouter();
+  useEffect(() => {
+    if (session?.user && (session.user as any).role === "INTERN") {
+      router.push("/intern-panel");
+    }
+  }, [session, router]);
+
   const [filter, setFilter] = useState('all');
   const [isScanning, setIsScanning] = useState(false);
   const [interns, setInterns] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   // Multiple selection for bulk team updates
   const [isTeamUpModalOpen, setIsTeamUpModalOpen] = useState(false);
@@ -134,24 +139,45 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (status === "unauthenticated") return;
     
-    fetch('/api/interns')
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setInterns(data);
-        } else {
-          console.error("Expected array but got:", data);
-          setInterns([]);
-        }
-        setIsLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch interns:", err);
-        setInterns([]);
-        setIsLoading(false);
-      });
+    Promise.all([
+      fetch("/api/interns").then(res => res.json()),
+      fetch("/api/logs").then(res => res.json()),
+        fetch("/api/reviews").then(res => res.json())
+    ]).then(([internData, logsData, reviewsData]) => {
+      if (Array.isArray(internData)) setInterns(internData);
+      if (Array.isArray(logsData)) setLogs(logsData);
+        if (Array.isArray(reviewsData)) setReviews(reviewsData);
+      setIsLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setIsLoading(false);
+    });
   }, [status]);
 
+
+  const weeklyChartData = useMemo(() => {
+    const days = ["M", "T", "W", "T", "F", "S", "S"];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    
+    const now = new Date();
+    const dayOfWeek = now.getDay() || 7;
+    const startOfWeek = new Date(now);
+    startOfWeek.setHours(0, 0, 0, 0);
+    startOfWeek.setDate(now.getDate() - dayOfWeek + 1);
+
+    logs.forEach((log: any) => {
+      const logDate = new Date(log.createdAt);
+      if (logDate >= startOfWeek) {
+        const logDay = logDate.getDay() || 7;
+        counts[logDay - 1] += 1;
+      }
+    });
+
+    return days.map((day, i) => ({
+      day,
+      logs: counts[i]
+    }));
+  }, [logs]);
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-[#e0e5ec] flex flex-col gap-6 items-center justify-center p-6 text-center">
@@ -184,6 +210,7 @@ export default function AdminDashboard() {
   const totalXP = interns.reduce((sum, i) => sum + (i.xp || 0), 0);
   const avgXP = interns.length ? Math.round(totalXP / interns.length) : 0;
 
+  
   const handleToggleInternSelection = (id: string) => {
     const newSet = new Set(selectedInternIds);
     if (newSet.has(id)) {
@@ -225,7 +252,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <main className="relative w-full h-screen overflow-hidden bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#8A2BE2] selection:text-white">
+    <><main className="relative w-full h-screen overflow-hidden bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#8A2BE2] selection:text-white">
       
       {/* Interactive Background */}
       <InteractivePixelGrid />
@@ -267,9 +294,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-bold text-slate-900">{session?.user?.name || "Admin User"}</p>
                     <p className="text-xs text-slate-500 font-medium mt-1 truncate">{session?.user?.email || "admin@belvo.com"}</p>
                   </div>
-                  <button className="text-left px-4 py-3 text-sm font-bold text-slate-700 hover:bg-[#8A2BE2] hover:text-white transition-colors border-b-2 border-slate-100">
-                    Settings
-                  </button>
+                  <button onClick={() => { setIsPasswordModalOpen(true); setIsProfileMenuOpen(false); }} className="text-left px-4 py-3 text-sm font-bold text-slate-700 hover:bg-[#8A2BE2] hover:text-white transition-colors border-b-2 border-slate-100">Change Password</button>
                   <button 
                     onClick={() => signOut()}
                     className="text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-500 hover:text-white transition-colors"
@@ -315,9 +340,7 @@ export default function AdminDashboard() {
                   <option value="design" className="bg-[#ffffff]">Design</option>
                   <option value="marketing" className="bg-[#ffffff]">Marketing</option>
                 </select>
-                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-[#8A2BE2] group-hover:translate-y-[2px] transition-transform">
-                  ▼
-                </div>
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-[#8A2BE2] group-hover:translate-y-[2px] transition-transform">&#9660;</div>
               </div>
             </div>
           </div>
@@ -363,11 +386,7 @@ export default function AdminDashboard() {
                       tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }} 
                       dy={5} 
                     />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#94a3b8', fontSize: 10 }} 
-                    />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} allowDecimals={false} />
                     <Tooltip 
                       cursor={{ fill: 'rgba(138, 43, 226, 0.1)' }}
                       contentStyle={{ borderRadius: '8px', border: '2px solid #000', boxShadow: '4px 4px 0 0 rgba(0,0,0,1)', fontWeight: 'bold', fontSize: '12px', padding: '4px 8px' }}
@@ -392,18 +411,21 @@ export default function AdminDashboard() {
             <div className="space-y-3 flex-1 min-h-[150px] relative z-10">
               <h3 className="text-xs uppercase tracking-widest text-slate-500 font-medium">Feedback Feed</h3>
               <div className="space-y-3">
-                {[
-                  { name: "Sarah J.", text: "Incredible attention to detail in the latest UI sprint." },
-                  { name: "Michael T.", text: "Great communication during the daily standups. Proactive." }
-                ].map((review, i) => (
-                  <div key={i} className="bg-black/30 p-4 rounded-2xl border-2 border-black hover:border-[#8A2BE2]/30 transition-colors cursor-pointer group">
+                {reviews.length > 0 ? reviews.map((review, i) => (
+                  <div key={review.id || i} className="bg-black/30 p-4 rounded-2xl border-2 border-black hover:border-[#8A2BE2]/30 transition-colors cursor-pointer group">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-200 group-hover:text-slate-900">{review.name}</span>
-                      <div className="flex text-[#8A2BE2] text-xs gap-0.5">★★★★★</div>
+                      <span className="text-sm font-medium text-gray-200 group-hover:text-slate-900">{review.name} &rarr; {review.targetName}</span>
+                      <div className="flex text-[#8A2BE2] text-xs gap-0.5">
+                        {Array.from({ length: 5 }).map((_, idx) => (
+                          <span key={idx} className={idx < review.rating ? "opacity-100" : "opacity-30"}>&#9733;</span>
+                        ))}
+                      </div>
                     </div>
                     <p className="text-xs text-slate-500 leading-relaxed">{review.text}</p>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-xs text-slate-400 italic">No feedback yet.</p>
+                )}
               </div>
             </div>
           </aside>
@@ -493,5 +515,21 @@ export default function AdminDashboard() {
         }
       `}} />
     </main>
+      <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
+    </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

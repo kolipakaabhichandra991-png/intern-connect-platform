@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from 'react';
 import { createClient } from './client';
@@ -8,26 +9,49 @@ export function useSession() {
   const supabase = createClient();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setSession({ user: { email: session.user.email, id: session.user.id } });
-        setStatus("authenticated");
+    let isMounted = true;
+    
+    async function initSession() {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      
+      if (authSession) {
+        // Fetch role from Prisma
+        try {
+          const res = await fetch('/api/me');
+          if (res.ok) {
+            const data = await res.json();
+            if (isMounted) {
+              setSession({ user: { email: authSession.user.email, id: authSession.user.id, role: data.role } });
+              setStatus("authenticated");
+            }
+            return;
+          }
+        } catch (e) {}
+        
+        if (isMounted) {
+          setSession({ user: { email: authSession.user.email, id: authSession.user.id } });
+          setStatus("authenticated");
+        }
       } else {
-        setStatus("unauthenticated");
+        if (isMounted) setStatus("unauthenticated");
       }
-    });
+    }
+    
+    initSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setSession({ user: { email: session.user.email, id: session.user.id } });
-        setStatus("authenticated");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, authSession) => {
+      if (authSession) {
+        initSession();
       } else {
         setSession(null);
         setStatus("unauthenticated");
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
   return { data: session, status };

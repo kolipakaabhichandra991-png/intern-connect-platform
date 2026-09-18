@@ -1,5 +1,6 @@
-"use client";
+﻿"use client";
 import React, { useState, useEffect } from 'react';
+import RatingComponent from '@/components/reviews/RatingComponent';
 import Link from 'next/link';
 import { signOut, useSession } from '@/lib/supabase/useSession';
 import { toast } from 'sonner';
@@ -250,20 +251,7 @@ export default function ReportsPage() {
                                 </div>
                               ) : (
                                 <div className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] p-6 rounded-xl border-2 border-black focus-within:border-[#8A2BE2] focus-within:shadow-[4px_4px_0_0_#8A2BE2] transition-all">
-                                  <div className="text-sm uppercase font-bold text-slate-400 mb-3">Provide Feedback</div>
-                                  <input 
-                                    type="text" 
-                                    placeholder="Type your review and press Enter..."
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        handleProvideFeedback(report.id, e.currentTarget.value);
-                                        e.currentTarget.value = "";
-                                      }
-                                    }}
-                                    className="bg-transparent text-base text-slate-900 placeholder-slate-400 outline-none w-full font-bold py-2"
-                                  />
-                                </div>
-                              )}
+                                  <RatingComponent internId={group.internId} reviewType="WORK_REPORT_EVALUATION" /></div>)}
                             </div>
                           ))}
                         </div>
@@ -293,3 +281,4 @@ export default function ReportsPage() {
     </main>
   );
 }
+

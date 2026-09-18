@@ -12,6 +12,8 @@ model User {
   id            String   @id // Now maps directly to Supabase auth.users UUID
   email         String   @unique
   role          String   @default("INTERN")
+  otpCode       String?
+  otpExpiry     DateTime?
   
   xp            Int      @default(0) // Gamification points
 
@@ -81,6 +83,10 @@ model InternProfile {
   completedProjects String   @default("[]") // JSON stringified array
   ongoingProjects   String   @default("[]") // JSON stringified array
 
+  upcomingProjectTitle String?
+  upcomingProjectDesc  String?
+  upcomingProjectDate  String?
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -119,3 +125,5 @@ model DailyReport {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
+
+

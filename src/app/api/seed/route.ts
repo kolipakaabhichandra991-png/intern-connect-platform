@@ -8,6 +8,7 @@ export async function GET() {
       where: { email: "admin@belvo.com" },
       update: {},
       create: {
+        id: crypto.randomUUID(),
         email: "admin@belvo.com",
         
         role: "ADMIN"
@@ -19,6 +20,7 @@ export async function GET() {
       where: { email: "intern@belvo.com" },
       update: {},
       create: {
+        id: crypto.randomUUID(),
         email: "intern@belvo.com",
         
         role: "INTERN"
@@ -55,6 +57,7 @@ export async function GET() {
       where: { email: "sarah@belvo.com" },
       update: {},
       create: {
+        id: crypto.randomUUID(),
         email: "sarah@belvo.com",
         
         role: "INTERN"

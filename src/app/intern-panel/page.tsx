@@ -8,13 +8,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { signOut, useSession } from "@/lib/supabase/useSession";
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 import InteractivePixelGrid from '@/components/game/InteractivePixelGrid';
 import KudosWidget from '@/components/KudosWidget';
 
 const logSchema = z.object({
-  reportOfDay: z.string().min(10, "Report must be at least 10 chars"),
-  learningOfDay: z.string().min(10, "Learning must be at least 10 chars"),
-  meetingOfDay: z.string().min(5, "Meeting info must be at least 5 chars"),
+  reportOfDay: z.string().min(1),
+  learningOfDay: z.string().min(1),
+  meetingOfDay: z.string().min(1),
 });
 
 type LogFormValues = z.infer<typeof logSchema>;
@@ -24,6 +25,7 @@ export default function InternPanelPage() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   
   const [intern, setIntern] = useState<any>(null);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -173,9 +175,9 @@ export default function InternPanelPage() {
   };
 
   const upcomingProject = {
-    title: "Implement Real-time WebSocket Feed",
-    deadline: "Friday, 5:00 PM",
-    description: "Build out the WebSocket integration for the new analytics dashboard live feed feature."
+    title: intern.upcomingProjectTitle || "No Upcoming Project",
+    deadline: intern.upcomingProjectDate || "N/A",
+    description: intern.upcomingProjectDesc || "No upcoming project assigned yet."
   };
 
   // Dynamic borders based on Level
@@ -184,7 +186,7 @@ export default function InternPanelPage() {
   if (displayIntern.level >= 5) cardBorder = "border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.7)]"; // Gold
 
   return (
-    <main className="min-h-screen bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#00f2fe] selection:text-slate-900 relative overflow-hidden pb-20">
+    <> `n <main className="min-h-screen bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#00f2fe] selection:text-slate-900 relative overflow-hidden pb-20">
       
       <InteractivePixelGrid />
 
@@ -223,9 +225,7 @@ export default function InternPanelPage() {
                     <p className="text-sm font-bold text-slate-900">{session?.user?.name || displayIntern.name || "Intern"}</p>
                     <p className="text-xs text-slate-500 font-medium mt-1 truncate">{session?.user?.email || "intern@belvo.com"}</p>
                   </div>
-                  <button className="text-left px-4 py-3 text-sm font-bold text-slate-700 hover:bg-[#00f2fe] hover:text-slate-900 transition-colors border-b-2 border-slate-100">
-                    Settings
-                  </button>
+                  <button onClick={() => { setIsPasswordModalOpen(true); setIsProfileMenuOpen(false); }} className="text-left px-4 py-3 text-sm font-bold text-slate-700 hover:bg-[#00f2fe] hover:text-slate-900 transition-colors border-b-2 border-slate-100">Change Password</button>
                   <button 
                     onClick={() => signOut()}
                     className="text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-500 hover:text-white transition-colors"
@@ -495,5 +495,12 @@ export default function InternPanelPage() {
       )}
 
     </main>
+      <ChangePasswordModal isOpen={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} />
+    </>
   );
 }
+
+
+
+
+

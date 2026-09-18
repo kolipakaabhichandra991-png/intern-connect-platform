@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useState, useEffect } from 'react';
 import { useSession } from '@/lib/supabase/useSession';
 import { toast } from 'sonner';
@@ -80,7 +80,7 @@ export default function ResourceHub() {
           </div>
           <Link 
             href={isAdmin ? "/dashboard" : "/intern-panel"}
-            className="bg-white border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] px-6 py-2 rounded-xl text-sm font-bold tracking-widest uppercase hover:bg-slate-50 hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all"
+            className="text-slate-900 bg-white border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] px-6 py-2 rounded-xl text-sm font-bold tracking-widest uppercase hover:bg-slate-50 hover:translate-y-1 hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all"
           >
             Back Home
           </Link>
@@ -88,7 +88,7 @@ export default function ResourceHub() {
 
         {/* Admin Add Form */}
         {isAdmin && (
-          <form onSubmit={handleAddResource} className="bg-white border-2 border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)] rounded-2xl p-6 flex flex-col gap-4">
+          <form onSubmit={handleAddResource} className="text-slate-900 bg-white border-2 border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)] rounded-2xl p-6 flex flex-col gap-4">
             <h3 className="text-lg font-bold text-slate-900">Add New Resource (Admin Only)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input type="text" placeholder="Title" required value={title} onChange={e => setTitle(e.target.value)} className="border-2 border-black p-3 rounded-xl focus:outline-none shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-slate-900 placeholder:text-slate-400" />
@@ -112,7 +112,7 @@ export default function ResourceHub() {
                 target="_blank" 
                 rel="noopener noreferrer" 
                 key={r.id} 
-                className="bg-white border-2 border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)] hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-1 transition-all rounded-2xl p-6 flex flex-col h-full"
+                className="text-slate-900 bg-white border-2 border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)] hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-1 transition-all rounded-2xl p-6 flex flex-col h-full"
               >
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600 mb-2">{r.category}</span>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">{r.title}</h3>
@@ -130,3 +130,4 @@ export default function ResourceHub() {
     </main>
   );
 }
+
