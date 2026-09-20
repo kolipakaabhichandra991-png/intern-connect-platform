@@ -39,9 +39,16 @@ export async function POST(req: Request) {
       where: { email: { equals: email, mode: 'insensitive' } }
     });
 
+    
     if (!user) {
-      return NextResponse.json({ error: "Account does not exist" }, { status: 404 });
+      return NextResponse.json({ error: "Incorrect email" }, { status: 404 });
     }
+
+    // Ensure the requested login role matches the user's actual role in the database
+    if (!isRegister && role && user.role !== role) {
+      return NextResponse.json({ error: "Incorrect email" }, { status: 403 });
+    }
+  
 
     // Generate 6 digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();

@@ -66,6 +66,11 @@ export async function GET(req: Request) {
     }
 
     const logs = await prisma.dailyReport.findMany({
+      where: {
+        intern: {
+          adminId: (session.user as any).id
+        }
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         intern: {

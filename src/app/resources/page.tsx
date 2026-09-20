@@ -1,5 +1,6 @@
 ﻿'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
+import Loader from '@/components/Loader';
 import { useSession } from '@/lib/supabase/useSession';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -65,7 +66,7 @@ export default function ResourceHub() {
   }
 
   if (status === "loading") {
-    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center font-bold text-xl">Loading...</div>;
+    return <Loader text="Loading Resources..." />;
   }
 
   return (

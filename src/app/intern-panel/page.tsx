@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
+import Loader from '@/components/Loader';
 import Link from 'next/link';
 import QRCodeGenerator from "@/components/qrcode/QRCodeGenerator";
 import PomodoroTimer from "@/components/PomodoroTimer";
@@ -146,7 +147,7 @@ export default function InternPanelPage() {
   }
 
   if (status === "loading" || isLoading) {
-    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center font-bold text-xl">Loading Dashboard...</div>;
+    return <Loader text="Loading Panel..." />;
   }
 
   if (!intern) {

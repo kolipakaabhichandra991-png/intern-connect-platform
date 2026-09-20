@@ -21,6 +21,7 @@ model User {
   updatedAt     DateTime @updatedAt
 
   internProfile InternProfile?
+  managedInterns InternProfile[] @relation("AdminInterns")
   givenReviews  Review[]       @relation("Reviewer")
   hrReviews     DailyReport[]  @relation("HrReviewer")
 
@@ -54,6 +55,8 @@ model InternProfile {
   id                String   @id @default(cuid())
   userId            String   @unique
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId           String?
+  admin             User?    @relation("AdminInterns", fields: [adminId], references: [id])
   
   name              String
   dob               DateTime

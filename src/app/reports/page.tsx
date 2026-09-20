@@ -1,5 +1,6 @@
 ﻿"use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
+import Loader from '@/components/Loader';
 import RatingComponent from '@/components/reviews/RatingComponent';
 import Link from 'next/link';
 import { signOut, useSession } from '@/lib/supabase/useSession';
@@ -70,7 +71,7 @@ export default function ReportsPage() {
   }
 
   if (status === "loading" || isLoading) {
-    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center font-bold">Loading...</div>;
+    return <Loader text="Loading Reports..." />;
   }
 
   const groupedReportsArray = Object.values(

@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "@/lib/session";
 
 export async function POST(req: Request) {
   try {
     const { name, email, password, role, department, photoUrl } = await req.json();
+    
+    // Find the current admin if they are logged in
+    const session = await getServerSession();
+    let currentAdminId = null;
+    if (session && session.user && session.user.role === "ADMIN") {
+      currentAdminId = session.user.id;
+    }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,7 +49,8 @@ export async function POST(req: Request) {
         update: {
           name,
           department,
-          photoUrl: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`
+          photoUrl: photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`,
+          ...(currentAdminId ? { adminId: currentAdminId } : {})
         },
         create: {
           userId,
@@ -52,7 +61,8 @@ export async function POST(req: Request) {
           xp: 0,
           dob: new Date(),
           teamName: "New Joiners",
-          idCardNumber: "BEL-" + Math.floor(Math.random() * 10000).toString()
+          idCardNumber: "BEL-" + Math.floor(Math.random() * 10000).toString(),
+          ...(currentAdminId ? { adminId: currentAdminId } : {})
         }
       });
     }

@@ -30,8 +30,29 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    const session = await getServerSession();
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Determine the relevant adminId to filter by
+    let relevantAdminId = (session.user as any).id;
+    if ((session.user as any).role === "INTERN") {
+      const myProfile = await prisma.internProfile.findUnique({
+        where: { userId: (session.user as any).id }
+      });
+      if (myProfile && myProfile.adminId) {
+        relevantAdminId = myProfile.adminId;
+      }
+    }
+
     // Fetch latest 10 reviews
     const reviews = await prisma.review.findMany({
+      where: {
+        intern: {
+          adminId: relevantAdminId
+        }
+      },
       orderBy: { timestamp: 'desc' },
       take: 10,
       include: {

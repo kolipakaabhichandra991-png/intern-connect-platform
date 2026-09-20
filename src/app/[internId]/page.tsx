@@ -1,4 +1,5 @@
 "use client";
+import Loader from '@/components/Loader';
 import { useState, use, useEffect } from "react";
 import QRCodeGenerator from "@/components/qrcode/QRCodeGenerator";
 import { useSession } from "@/lib/supabase/useSession";
@@ -60,7 +61,7 @@ export default function ScannedProfilePage({ params }: { params: Promise<{ inter
   }, [resolvedParams.internId]);
 
   if (isLoading) {
-    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center text-xl font-bold">Loading Dossier...</div>;
+    return <Loader text="Loading Dossier..." />;
   }
 
   if (!intern) {

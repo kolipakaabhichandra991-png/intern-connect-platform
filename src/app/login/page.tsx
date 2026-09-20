@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense } from 'react'; 
+import Loader from '@/components/Loader';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -168,7 +169,7 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<Loader text="Preparing Portal..." />}>
       <LoginContent />
     </Suspense>
   );

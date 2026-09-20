@@ -1,5 +1,6 @@
 ﻿"use client";
-import React, { useRef, useMemo, useState, useEffect } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react'; 
+import Loader from '@/components/Loader';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sparkles, Float, MeshTransmissionMaterial, Environment } from '@react-three/drei';
 import * as THREE from 'three';
@@ -29,21 +30,16 @@ function AbstractLogo() {
   return (
     <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
       <mesh ref={meshRef} scale={1.8}>
-        <torusKnotGeometry args={[1, 0.3, 256, 64, 2, 3]} />
-        <MeshTransmissionMaterial 
-          backside
-          samples={4}
-          thickness={0.5}
-          chromaticAberration={0.8}
-          anisotropy={0.3}
-          distortion={0.5}
-          distortionScale={0.5}
-          temporalDistortion={0.1}
+        <torusKnotGeometry args={[1, 0.3, 128, 32, 2, 3]} />
+        <meshPhysicalMaterial 
           color="#8A2BE2"
           transmission={0.9}
+          opacity={1}
+          metalness={0.1}
           roughness={0.1}
-          clearcoat={1}
-          clearcoatRoughness={0.1}
+          ior={1.5}
+          thickness={0.5}
+          transparent={true}
         />
       </mesh>
     </Float>
@@ -194,7 +190,7 @@ export default function AdminDashboard() {
   }
 
   if (status === "loading" || isLoading) {
-    return <div className="min-h-screen bg-[#e0e5ec] flex items-center justify-center font-bold text-xl">Loading...</div>;
+    return <Loader text="Loading Dashboard..." />;
   }
 
   // Filter interns
