@@ -62,8 +62,8 @@ export default function InternPanelPage() {
         if (Array.isArray(allInternsData)) {
           // Filter out the current user, and pick a few others as 'team members'
           let others = allInternsData.filter(i => i.id !== meData.id);
-            if (meData.projectId) {
-              others = others.filter(i => i.projectId === meData.projectId);
+            if (meData.teamName) {
+              others = others.filter(i => i.teamName === meData.teamName);
             }
           setTeamMembers(others.slice(0, 3));
         }

@@ -35,7 +35,7 @@ export async function GET() {
             email: true
           }
         },
-        project: true // Include project data so they can see team members properly
+        
       },
       orderBy: {
         name: 'asc'
