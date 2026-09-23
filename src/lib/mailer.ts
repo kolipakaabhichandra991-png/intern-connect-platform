@@ -28,6 +28,6 @@ export async function sendOTP(to: string, otp: string) {
     return true;
   } catch (error) {
     console.error("Error sending email:", error);
-    return false;
+    throw error;
   }
 }
