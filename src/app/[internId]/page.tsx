@@ -261,7 +261,7 @@ export default function ScannedProfilePage({ params }: { params: Promise<{ inter
   const title = formElements.title.value;
   const desc = formElements.desc.value;
   const date = formElements.date.value;
-  const formData = { get: (name) => formElements[name].value };
+  const formData = { get: (name: string) => formElements[name]?.value || "" };
                     const res = await fetch(`/api/interns/${displayIntern.userId}/project`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
