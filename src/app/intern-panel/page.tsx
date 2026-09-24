@@ -1,4 +1,5 @@
 "use client";
+import { Star } from "lucide-react";
 import React, { useState, useEffect } from 'react'; 
 import Loader from '@/components/Loader';
 import Link from 'next/link';
