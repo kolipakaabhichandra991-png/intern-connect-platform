@@ -34,7 +34,10 @@ export default function InternPanelPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editBio, setEditBio] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editIdCard, setEditIdCard] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editAddress, setEditAddress] = useState("");
   const [editInstagram, setEditInstagram] = useState("");
   const [editLinkedIn, setEditLinkedIn] = useState("");
   const [editGithub, setEditGithub] = useState("");
@@ -55,7 +58,10 @@ export default function InternPanelPage() {
         toast.error(meData.error);
       } else {
         setIntern(meData);
-        setEditBio(meData.bio || "");
+        setEditName(meData.name || "");
+          setEditIdCard(meData.idCardNumber || "");
+          setEditPhone(meData.phone || "");
+          setEditAddress(meData.address || "");
         setEditInstagram(meData.instagramId || "");
         setEditLinkedIn(meData.linkedInId || "");
         setEditGithub(meData.githubId || "");
@@ -84,7 +90,10 @@ export default function InternPanelPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          bio: editBio,
+          name: editName,
+            idCardNumber: editIdCard,
+            phone: editPhone,
+            address: editAddress,
           instagramId: editInstagram,
           linkedInId: editLinkedIn,
           githubId: editGithub
