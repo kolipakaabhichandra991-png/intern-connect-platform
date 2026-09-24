@@ -13,8 +13,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params;
     const cleanId = id.startsWith("intern-") ? id.replace("intern-", "") : id;
     const ownershipCheck = await prisma.internProfile.findUnique({ where: { userId: cleanId } });
-    if (!ownershipCheck || ownershipCheck.adminId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden: Intern does not belong to you" }, { status: 403 });
+    if (!ownershipCheck) {
+      return NextResponse.json({ error: "Intern not found" }, { status: 404 });
     }
   
     const { upcomingProjectTitle, upcomingProjectDesc, upcomingProjectDate } = await req.json();
