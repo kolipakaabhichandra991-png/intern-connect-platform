@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+:root {
+  /* Exactly matching the Dee7 Reference Colors for Maximum Clay Contrast */
+  --background-outer: #D5DCE4; /* Deep cool grey/blue */
+  --background-inner: #E9EEF5; /* Lighter cool grey */
+  --clay-panel-bg: #F4F7FB;    /* Almost white panel */
+  
+  --tattva-primary: #6B1E2D; /* Kept your maroon for buttons/text */
+  --tattva-dark: #481521;
+  --tattva-accent: #B18A55;
+  
+  /* SHARP, tight shadows for that thick, hard-plastic/clay look */
+  --shadow-dark: rgba(150, 165, 185, 0.45);
+  --shadow-light: rgba(255, 255, 255, 1);
+  --inset-dark: rgba(150, 165, 185, 0.3);
+  --inset-light: rgba(255, 255, 255, 1);
+}
+
+@theme inline {
+  --color-tattva-primary: var(--tattva-primary);
+  --color-tattva-dark: var(--tattva-dark);
+  --color-tattva-accent: var(--tattva-accent);
+  
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--background-outer);
+  color: #282323;
+  padding: 1rem;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+@media (min-width: 768px) {
+  body {
+    padding: 2.5rem;
+  }
+}
+
+/* 1. Main Website Wrapper (The stacked card effect) */
+.clay-site-wrapper {
+  background: var(--background-inner);
+  border-radius: 2.5rem;
+  border: 4px solid #FFFFFF;
+  box-shadow: 
+    0 20px 0 -5px #DFE6EF,
+    0 40px 0 -10px #D5DCE4,
+    0 50px 30px -15px rgba(100, 115, 135, 0.3),
+    inset 0 0 20px rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 90vh;
+}
+
+/* 2. Inner Panels (Sharper blurs for distinct borders) */
+.clay-panel, .clay-card {
+  background: var(--clay-panel-bg);
+  border-radius: 2rem;
+  border: 4px solid #FFFFFF;
+  box-shadow: 
+    8px 8px 16px var(--shadow-dark),
+    -8px -8px 16px var(--shadow-light),
+    inset -4px -4px 8px var(--inset-dark),
+    inset 4px 4px 8px var(--inset-light);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.clay-panel:hover, .clay-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    12px 12px 20px var(--shadow-dark),
+    -12px -12px 20px var(--shadow-light),
+    inset -4px -4px 8px var(--inset-dark),
+    inset 4px 4px 8px var(--inset-light);
+}
+
+.clay-panel-dark, .clay-card-dark {
+  background: var(--tattva-primary);
+  border-radius: 2rem;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    8px 8px 16px rgba(72, 21, 33, 0.6),
+    -8px -8px 16px rgba(255, 255, 255, 0.5),
+    inset -4px -4px 8px rgba(72, 21, 33, 0.8),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* 3. Buttons (Pill shaped with strong clay borders) */
+.clay-btn {
+  background: var(--clay-panel-bg);
+  border-radius: 9999px;
+  border: 3px solid #FFFFFF;
+  box-shadow: 
+    5px 5px 10px var(--shadow-dark),
+    -5px -5px 10px var(--shadow-light),
+    inset -3px -3px 6px var(--inset-dark),
+    inset 3px 3px 6px var(--inset-light);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.clay-btn:active {
+  transform: scale(0.97);
+  box-shadow: 
+    inset 4px 4px 8px var(--inset-dark),
+    inset -4px -4px 8px var(--inset-light);
+}
+
+.clay-btn-primary {
+  background: var(--tattva-dark);
+  color: #FFFFFF;
+  border-radius: 9999px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    5px 5px 10px rgba(72, 21, 33, 0.5),
+    -5px -5px 10px rgba(255, 255, 255, 0.5),
+    inset -3px -3px 6px rgba(0, 0, 0, 0.5),
+    inset 3px 3px 6px rgba(255, 255, 255, 0.3);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+    
+.clay-btn-primary:active {
+  transform: scale(0.97);
+  box-shadow: 
+    inset 6px 6px 12px rgba(0, 0, 0, 0.6),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.1);
+}
+
+/* 4. Form Inputs (Recessed clay) */
+.clay-input {
+  background: var(--clay-panel-bg);
+  border: 3px solid #FFFFFF;
+  border-radius: 1rem;
+  box-shadow: 
+    inset 4px 4px 8px var(--inset-dark),
+    inset -4px -4px 8px var(--inset-light);
+  padding: 1rem 1.5rem;
+  width: 100%;
+  outline: none;
+  transition: all 0.3s ease;
+}
+    
+.clay-input:focus {
+  border-color: #FFFFFF;
+  box-shadow: 
+    inset 6px 6px 12px var(--inset-dark),
+    inset -6px -6px 12px var(--inset-light),
+    0 0 0 3px rgba(177, 138, 85, 0.4);
+}
+
+/* 5. Image/Icon Extruded Frames */
+.clay-icon-block {
+  background: var(--clay-panel-bg);
+  border-radius: 1.5rem;
+  border: 4px solid #FFFFFF;
+  box-shadow: 
+    6px 6px 12px var(--shadow-dark),
+    -6px -6px 12px var(--shadow-light),
+    inset -3px -3px 6px var(--inset-dark),
+    inset 3px 3px 6px var(--inset-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

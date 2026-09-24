@@ -73,6 +73,8 @@ model InternProfile {
   weight            Float?
   bloodGroup        String?
   city              String?
+  phone             String?
+  address           String?
 
   bio               String?
   likesCorporate    String?
