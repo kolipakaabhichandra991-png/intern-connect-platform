@@ -257,7 +257,7 @@ export default function ScannedProfilePage({ params }: { params: Promise<{ inter
                 <form 
                   onSubmit={async (e) => {
                     e.preventDefault();
-                    const formData = new FormData(e.target);
+                    const formData = new FormData(e.currentTarget);
                     const res = await fetch(`/api/interns/${displayIntern.userId}/project`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
