@@ -200,7 +200,8 @@ export default function InternPanelPage() {
   if (displayIntern.level >= 5) cardBorder = "border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.7)]"; // Gold
 
   return (
-    <> `n <main className="min-h-screen bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#00f2fe] selection:text-slate-900 relative overflow-hidden pb-20">
+    <> 
+ <main className="min-h-screen bg-[#e0e5ec] text-slate-900 font-sans selection:bg-[#00f2fe] selection:text-slate-900 relative overflow-hidden pb-20">
       
       <InteractivePixelGrid />
 
