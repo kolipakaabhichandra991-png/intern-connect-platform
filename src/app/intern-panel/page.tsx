@@ -189,9 +189,9 @@ export default function InternPanelPage() {
   };
 
   const upcomingProject = {
-    title: intern.upcomingProjectTitle || "No Upcoming Project",
+    title: intern.upcomingProjectTitle || "No Current Project",
     deadline: intern.upcomingProjectDate || "N/A",
-    description: intern.upcomingProjectDesc || "No upcoming project assigned yet."
+    description: intern.upcomingProjectDesc || "No current project assigned yet."
   };
 
   // Dynamic borders based on Level
@@ -341,13 +341,13 @@ export default function InternPanelPage() {
           {/* Right Column: Projects and Team */}
           <div className="w-full lg:w-7/12 flex flex-col gap-6">
             
-            {/* Upcoming Project */}
+            {/* Current Project */}
             <div className="bg-white shadow-[4px_4px_0_0_rgba(0,0,0,1)] backdrop-blur-xl border-2 border-black p-8 rounded-xl shadow-[4px_4px_0_0_rgba(0,0,0,1)] relative overflow-hidden flex flex-col justify-center">
               <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-transparent via-[#00f2fe] to-transparent opacity-50"></div>
               
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
-                  Upcoming Project
+                  Current Project
                   <span className="text-[9px] bg-red-500/20 text-red-400 px-2 py-1 rounded uppercase tracking-widest">High Priority</span>
                 </h3>
               </div>

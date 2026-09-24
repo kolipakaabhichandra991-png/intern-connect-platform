@@ -252,7 +252,7 @@ export default function ScannedProfilePage({ params }: { params: Promise<{ inter
             
             {/* UPCOMING PROJECT EDIT */}
             <div className="bg-white p-6 rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Upcoming Project</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Current Project</h3>
               {isAdmin ? (
                 <form 
                   onSubmit={async (e) => {
