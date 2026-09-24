@@ -29,7 +29,7 @@ export async function GET() {
     const internProfile = await prisma.internProfile.findUnique({
       where: { userId: user.id },
       include: {
-        dailyReports: true,
+        dailyReports: true, reviews: { orderBy: { timestamp: "desc" } },
       }
     });
 
