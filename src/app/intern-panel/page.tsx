@@ -389,7 +389,7 @@ export default function InternPanelPage() {
                         </div>
                         <div className="flex gap-1 mb-3">
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <span key={i} className={i < review.rating ? "text-[#8A2BE2] text-lg" : "text-slate-200 text-lg"}>?</span>
+                            <Star key={i} className={`w-5 h-5 ${i < review.rating ? "text-[#8A2BE2] fill-[#8A2BE2]" : "text-slate-300"}`} />
                           ))}
                         </div>
                         {review.comments && (
