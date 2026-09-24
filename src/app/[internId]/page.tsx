@@ -259,16 +259,19 @@ export default function ScannedProfilePage({ params }: { params: Promise<{ inter
                     e.preventDefault();
                     const formData = new FormData(e.target);
                     const res = await fetch(`/api/interns/${displayIntern.userId}/project`, {
-                      method: 'PUT',
-                      body: JSON.stringify({
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
                         upcomingProjectTitle: formData.get('title'),
                         upcomingProjectDesc: formData.get('desc'),
                         upcomingProjectDate: formData.get('date'),
                       })
-                    });
+  });
                     if (res.ok) {
-                      toast.success('Project updated!');
-                    } else {
+    const updatedIntern = await res.json();
+    setIntern(updatedIntern);
+    toast.success('Project updated!');
+  } else {
                       toast.error('Failed to update project');
                     }
                   }}
