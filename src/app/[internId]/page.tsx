@@ -162,7 +162,7 @@ export default function ScannedProfilePage({ params }: { params: Promise<{ inter
 
       {/* Tabs */}
       <div className="mt-12 px-6 flex justify-center gap-4 relative z-10">
-        {['ABOUT', 'PROJECTS', 'ACTIVITY'].map((tab) => (
+        {['ABOUT', 'PROJECTS', ...(isAdmin ? ['ACTIVITY'] : [])].map((tab) => (
           <button 
             key={tab}
             onClick={() => setActiveTab(tab)}
